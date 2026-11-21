@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Learn about Ghost Shopper — connecting our community with the stores they love in Verulam, KZN." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ghost Shopper" />
+  <title>About Us — Ghost Shopper</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <link rel="preload" href="img/ghost-shopper-logo.png" as="image" />
+  <link rel="preload" href="css/base.css" as="style" />
+  <link rel="preload" href="css/index.css" as="style" />
+  <link rel="preload" href="css/about.css" as="style" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <link rel="apple-touch-icon" href="img/icon-192.png" />
+
+  <!-- Google Fonts & FontAwesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'" />
+
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="css/base.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="css/index.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="css/about.css" media="print" onload="this.media='all'" />
+  
+  <noscript>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/about.css" />
+  </noscript>
+
+  <!-- Critical Inline CSS for Loader -->
+  <style>
+    #loadingScreen {
+      position: fixed; inset: 0; background: #1B2B6B; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.45s ease; padding: 24px;
+    }
+    #loadingScreen.hidden { opacity: 0; pointer-events: none; }
+    #loadingScreen .loader { text-align: center; color: #fff; width: 100%; max-width: 260px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    #loadingScreen .loader-spinner {
+      width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #F97316; border-radius: 50%; animation: gsLoaderSpin 0.85s linear infinite;
+    }
+    @keyframes gsLoaderSpin { to { transform: rotate(360deg); } }
+    #loadingScreen .loader-tagline { font-size: 0.95rem; font-weight: 600; color: rgba(255,255,255,0.92); text-align: center; line-height: 1.4; }
+    #loadingScreen .loader-logo { height: 44px; width: auto; opacity: 0.85; }
+  </style>
+</head>
+<body>
+
+  <!-- ADD THIS WRAPPER -->
+  <div class="about-page-wrapper">
+
+  <!-- LOADING SCREEN -->
+  <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite">
+    <div class="loader">
+      <div class="loader-spinner" aria-hidden="true"></div>
+      <div class="loader-tagline">Loading About Us...</div>
+      <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="loader-logo" width="80" height="80" decoding="async" />
+    </div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar-inner">
+      <a href="index.html" class="logo" aria-label="Ghost Shopper home">
+        <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="logo-img" width="88" height="88" decoding="async" />
+        <span class="logo-name">Ghost<span>Shopper</span></span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="stores.html" class="nav-icon-btn desktop-only" aria-label="Stores">
+          <i class="fas fa-store" aria-hidden="true"></i>
+        </a>
+        <button class="nav-icon-btn desktop-only" id="desktopNotifyBtn" type="button" aria-label="Notifications">
+          <i class="fas fa-bell" aria-hidden="true"></i>
+          <span class="notif-badge" id="desktop-notif-count" style="display:none;">•</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="desktopCartBtn" type="button" aria-label="Cart">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          <span class="cart-badge" id="cart-count">0</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="authBtn" type="button" aria-label="Sign in">
+          <i class="fas fa-user" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <!-- 1. Hero Section -->
+    <section class="about-hero">
+      <div class="about-hero-bg">
+        <img src="img/about-hero.jpg" alt="Family shopping online with Ghost Shopper" />
+      </div>
+      <div class="about-hero-inner">
+        <h1>About Ghost <em>Shopper</em></h1>
+        <p>Connecting our community with the stores they love, delivered to their door.</p>
+      </div>
+    </section>
+
+        <div class="about-container">
+      
+            <!-- 1. Founder Section -->
+      <section class="about-founder-section">
+        
+        <!-- Wrap the text content -->
+        <div class="founder-content">
+          
+          <!-- Header info -->
+          <div class="founder-headers">
+            <span class="founder-eyebrow">
+              <i class="fas fa-star" aria-hidden="true"></i>
+              Meet the Founder
+            </span>
+            <h2 class="founder-name">Mohammed Zain Saragee</h2>
+            <p class="founder-role">Founder &amp; CEO</p>
+          </div>
+
+          <!-- Story info -->
+          <div class="founder-story-inline">
+            <p class="founder-lead">
+              Ghost Shopper was born from my belief that everyday shopping could be
+              <strong>made simpler</strong> while creating <strong>more opportunities for local businesses</strong>.
+            </p>
+            <p>As an entrepreneur, I have always been interested in identifying gaps in the market and finding practical ways to solve real-world problems. I saw an opportunity to bring local stores together on one online platform.</p>
+            <p>My vision for Ghost Shopper goes beyond delivery. I want to help local retailers <strong>reach more customers</strong>, compete in an increasingly digital world and <strong>grow their businesses</strong> without having to build their own platforms from scratch.</p>
+            
+            <div class="founder-location-callout">
+              <div class="founder-location-icon">
+                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+              </div>
+              <div>
+                <span class="founder-location-label">Starting locally in</span>
+                <strong>Verulam, KwaZulu-Natal</strong>
+                <p>Because I believe meaningful growth begins with serving your own community well.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image -->
+        <div class="founder-photo-wrap">
+          <img src="img/mohammed zain saragee.jpg" alt="Mohammed Zain Saragee, Founder of Ghost Shopper" class="founder-photo" />
+        </div>
+        
+      </section>
+
+      <!-- 2. Mission & Supporting Local -->
+      <section class="about-intro-section">
+        <!-- Mission -->
+        <div class="about-block">
+          <div class="about-quote-mark">“</div>
+          <div class="about-block-header">
+            <span class="about-block-num">01</span>
+            <div class="about-icon">
+              <i class="fas fa-bullseye" aria-hidden="true"></i>
+            </div>
+          </div>
+          <div class="about-block-content">
+            <h2>Our Mission</h2>
+            <p>Ghost Shopper was built to make everyday shopping easier for the people of Verulam and the surrounding areas. We believe you shouldn't have to spend hours driving to the shops, finding parking, and carrying heavy bags just to get your daily essentials.</p>
+            <p>By partnering with local stores, supermarkets, butcheries, and pharmacies, we allow you to shop online and have a trusted local rider deliver your order straight to your door.</p>
+          </div>
+        </div>
+
+        <!-- Supporting Local -->
+        <div class="about-block">
+          <div class="about-quote-mark">“</div>
+          <div class="about-block-header">
+            <span class="about-block-num">02</span>
+            <div class="about-icon">
+              <i class="fas fa-users" aria-hidden="true"></i>
+            </div>
+          </div>
+          <div class="about-block-content">
+            <h2>Supporting Local</h2>
+            <p>We are proud to be a local platform. When you order through Ghost Shopper, you are supporting businesses right here in your community. We don't mark up the prices of the products you love.</p>
+            <p>You pay the store's price, plus a simple delivery fee.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Vision Section -->
+      <section class="about-vision-section">
+        <div class="vision-quote-mark">“</div>
+        <div class="vision-content">
+          <h3>My Vision for Ghost Shopper</h3>
+          <p>My long-term ambition is to grow Ghost Shopper into a leading online shopping and local delivery platform across South Africa. I want to connect communities with the businesses around them, create earning opportunities for local riders and make convenient shopping accessible to more people.</p>
+          <p>I believe technology should not only make life easier for customers; it should also open doors for small and independent businesses.</p>
+          <p class="vision-highlight">Ghost Shopper is more than a delivery service. It is my vision for bringing local shopping into the digital age, one community at a time.</p>
+        </div>
+      </section>
+
+      <!-- 4. Bottom Section (Compact Cards with Images) -->
+      <section class="about-bottom-section">
+        <div class="about-cards-row">
+          
+          <!-- Partner Card -->
+          <div class="about-image-card partner-card">
+            <div class="image-card-img">
+              <img src="img/about-partner.jpg" alt="Local store owner" loading="lazy" />
+            </div>
+            <div class="image-card-content">
+              <div class="compact-card-icon">
+                <i class="fas fa-store" aria-hidden="true"></i>
+              </div>
+              <h3>Partner with Us</h3>
+              <p>Join our platform to reach more customers in Verulam and the surrounding areas.</p>
+              <button type="button" id="openPartnerModalBtn" class="btn-primary compact-btn">
+                <span>Partner with Us</span>
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Rider Card -->
+          <div class="about-image-card rider-card">
+            <div class="image-card-img">
+              <img src="img/about-rider.jpg" alt="Ghost Shopper rider" loading="lazy" />
+            </div>
+            <div class="image-card-content">
+              <div class="compact-card-icon">
+                <i class="fas fa-motorcycle" aria-hidden="true"></i>
+              </div>
+              <h3>Ride with Us</h3>
+              <p>Join our team of local riders and earn by delivering orders in your area.</p>
+              <a href="https://ghostdriver.web.app" class="btn-secondary" class="btn-secondary compact-btn" style="background: var(--navy); color: #fff; border: none;">
+                <span>Become a Rider</span>
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- BACK TO TOP BUTTON -->
+  <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">
+    <i class="fas fa-ghost" aria-hidden="true"></i>
+  </button>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo logo-footer">
+            <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="logo-img" width="76" height="76" decoding="async" loading="lazy" />
+            <span class="logo-name">Ghost<span>Shopper</span></span>
+          </div>
+          <p>Local stores. Local riders. Delivered to your door.</p>
+        </div>
+        <div>
+          <div class="footer-col-title">Company</div>
+          <div class="footer-links">
+            <a href="about.html">About Us</a>
+            <a href="index.html#how">How It Works</a>
+            <a href="#" id="footerPartnerLink">Partner with Us</a>
+            <a href="https://ghostdriver.web.app">Become a Rider</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">Support</div>
+          <div class="footer-links">
+            <a href="https://wa.me/27628989813" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-whatsapp" aria-hidden="true"></i> Chat on WhatsApp
+            </a>
+            <a href="my-orders.html">Track My Order</a>
+            <a href="https://wa.me/27628989813?text=I%20would%20like%20to%20report%20an%20issue..." target="_blank" rel="noopener noreferrer">Report an Issue</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">Legal</div>
+          <div class="footer-links">
+            <a href="#" class="legal-link" data-modal="privacy">Privacy Policy</a>
+            <a href="#" class="legal-link" data-modal="terms">Terms of Service</a>
+            <a href="#" class="legal-link" data-modal="cookie-info">Cookie Policy</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-payments" aria-label="Accepted payment methods">
+        <span class="footer-payments-label">We accept</span>
+        <img src="img/payment.png" alt="Visa, Mastercard, Google Pay" class="footer-payments-img" width="173" height="30" loading="lazy" onerror="this.style.display='none'" />
+        <span class="footer-payments-note"><i class="fas fa-lock"></i> Payments processed securely through Yoco</span>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ghost Shopper | Cloudskunk Hosting, All rights reserved. Terms and Conditions Apply.</p>
+        <div class="footer-socials" aria-label="Social media links">
+          <a href="https://web.facebook.com/profile.php?id=61589902767644" class="social-btn" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://wa.me/27628989813" class="social-btn" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i></a>
+          <a href="https://www.tiktok.com/@ghostshopza" class="social-btn" target="_blank" rel="noopener noreferrer"><i class="fab fa-tiktok"></i></a>
+          <a href="https://x.com/Ghostshopza" class="social-btn" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- BOTTOM NAV (Mobile) -->
+  <div class="bottom-nav" role="navigation" aria-label="Mobile navigation">
+    <button class="nav-item" data-page="home" type="button">
+      <i class="fas fa-home" aria-hidden="true"></i><span>Home</span>
+    </button>
+    <button class="nav-item" data-page="stores" id="bottomStoresBtn" type="button">
+      <i class="fas fa-store" aria-hidden="true"></i><span>Stores</span>
+    </button>
+    <button class="nav-item" data-page="cart" id="mobileCartBtn" type="button">
+      <i class="fas fa-shopping-bag" aria-hidden="true"></i><span>Cart</span>
+      <span class="bottom-cart-badge" id="bottom-cart-count">0</span>
+    </button>
+    <button class="nav-item" data-page="notifications" id="bottomNotifyBtn" type="button">
+      <i class="fas fa-bell" aria-hidden="true"></i><span>Alerts</span>
+      <span class="bottom-notif-badge" id="bottom-notif-count" style="display:none;">•</span>
+    </button>
+    <button class="nav-item" data-page="account" id="bottomAccountBtn" type="button">
+      <i class="fas fa-user" aria-hidden="true"></i><span>Account</span>
+    </button>
+  </div>
+
+  <!-- TOAST & LEGAL MODAL CONTAINER -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div id="legalModalContainer" class="legal-modal" style="display:none;"></div>
+  
+
+  <!-- AUTH MODAL (Needed for global.js to work) -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" role="button" tabindex="0">&times;</span>
+      <div class="auth-icon"><i class="fas fa-phone-alt"></i></div>
+      <h3>Sign in or Create Account</h3>
+      <form id="phoneForm">
+        <div class="form-group">
+          <label for="phoneNumber">Mobile Number *</label>
+          <div class="phone-input-group">
+            <span class="phone-input-prefix">+27</span>
+            <input type="tel" id="phoneNumber" placeholder="82 123 4567" maxlength="9" required />
+          </div>
+        </div>
+        <button type="submit" id="sendOtpBtn">Send OTP</button>
+      </form>
+      <div id="otpSection" style="display:none;">
+        <div class="form-group">
+          <label for="otpCode">Enter 6-digit code</label>
+          <input type="text" id="otpCode" class="otp-code-input" placeholder="000000" maxlength="6" />
+        </div>
+        <button id="verifyBtn" type="button">Verify &amp; Sign In</button>
+      </div>
+      <div id="authMessage"></div>
+    </div>
+  </div>
+
+  <!-- CART MODAL (Required for global.js to work on mobile) -->
+  <div class="cart-modal" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle" hidden>
+    <div class="cart-modal-backdrop"></div>
+    <div class="cart-modal-panel" role="document">
+      <div class="cart-modal-header">
+        <h2 class="cart-modal-title" id="cartModalTitle">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          Your Cart
+          <span class="cart-modal-count">0</span>
+        </h2>
+        <button class="cart-modal-close" type="button" aria-label="Close cart">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="cart-modal-store-badge" hidden>
+        <i class="fas fa-store" aria-hidden="true"></i>
+        <span class="cart-modal-store-name"></span>
+      </div>
+
+      <div class="cart-modal-body"></div>
+      <div class="cart-modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- MINI PARTNER MODAL -->
+  <div class="partner-mini-modal" id="partnerMiniModal" role="dialog" aria-modal="true" aria-labelledby="partnerMiniTitle" hidden>
+    <div class="partner-mini-backdrop" data-partner-close></div>
+    <div class="partner-mini-content" role="document">
+      <button class="partner-mini-close" type="button" aria-label="Close" data-partner-close>
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+      
+      <div class="partner-mini-icon">
+        <i class="fas fa-handshake"></i>
+      </div>
+      
+      <h3 id="partnerMiniTitle">Partner with Us</h3>
+      <p class="partner-mini-sub">Get in touch to list your store on Ghost Shopper. Choose how you'd like to reach us.</p>
+      
+      <div class="partner-mini-actions">
+        <!-- Mailto link -->
+        <a href="mailto:wedeliverzn@gmail.com?subject=Partner%20Store%20Enquiry&body=Hi%20Ghost%20Shopper%20Team%2C%0A%0AI%20am%20interested%20in%20listing%20my%20store%20on%20your%20platform.%0A%0AStore%20Name%3A%20%0AContact%20Person%3A%20%0APhone%20Number%3A%20%0A%0APlease%20let%20me%20know%20the%20next%20steps.%0A%0AThanks." class="partner-mini-btn email">
+          <span class="partner-mini-btn-icon"><i class="fas fa-envelope"></i></span>
+          <span class="partner-mini-btn-text">
+            <strong>Send an Email</strong>
+            <small>wedeliverzn@gmail.com</small>
+          </span>
+        </a>
+        
+        <!-- WhatsApp link with prefilled text -->
+        <a href="https://wa.me/27628989813?text=Hi%20Ghost%20Shopper%20Team%2C%0A%0AI%20am%20interested%20in%20listing%20my%20store%20on%20your%20platform.%0A%0AStore%20Name%3A%20%0AContact%20Person%3A%20%0APhone%20Number%3A%20%0A%0APlease%20let%20me%20know%20the%20next%20steps.%0A%0AThanks." target="_blank" rel="noopener noreferrer" class="partner-mini-btn whatsapp">
+          <span class="partner-mini-btn-icon"><i class="fab fa-whatsapp"></i></span>
+          <span class="partner-mini-btn-text">
+            <strong>Chat on WhatsApp</strong>
+            <small>+27 62 898 9813</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+    <!-- PARTNER MODAL (Added for footer link) -->
+  <div class="partner-modal" id="partnerModal" role="dialog" aria-modal="true" aria-labelledby="partnerModalTitle" hidden>
+    <div class="partner-modal-backdrop" id="partnerModalBackdrop"></div>
+    <div class="partner-modal-panel" role="document">
+      <button class="partner-modal-close" id="partnerModalClose" type="button" aria-label="Close">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+
+      <div class="partner-modal-icon" aria-hidden="true">
+        <i class="fas fa-handshake"></i>
+      </div>
+
+      <h3 id="partnerModalTitle">Partner with Us</h3>
+      <p class="partner-modal-sub">
+        Get in touch to list your store on Ghost Shopper. Choose how you'd like to reach us.
+      </p>
+
+      <div class="partner-modal-actions">
+        <a class="partner-btn partner-btn-email" href="mailto:wedeliverzn@gmail.com?subject=Partner%20Enquiry" target="_blank" rel="noopener noreferrer">
+          <span class="partner-btn-icon"><i class="fas fa-envelope" aria-hidden="true"></i></span>
+          <span class="partner-btn-text">
+            <strong>Send an Email</strong>
+            <small>wedeliverzn@gmail.com</small>
+          </span>
+        </a>
+
+        <a class="partner-btn partner-btn-whatsapp" href="https://wa.me/27628989813?text=Hi%20Ghost%20Shopper%20Team" target="_blank" rel="noopener noreferrer">
+          <span class="partner-btn-icon"><i class="fab fa-whatsapp" aria-hidden="true"></i></span>
+          <span class="partner-btn-text">
+            <strong>Chat on WhatsApp</strong>
+            <small>+27 62 898 9813</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="config/env.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/global.js"></script>
+  
+  <script type="module">
+    // Boot the shared global systems (legal modals, bottom nav,
+    // cart modal, auth modal, account modal) exactly like index.js does.
+    import { initGlobal } from './js/global.js';
+
+    window.addEventListener('load', () => {
+      try {
+        const p = initGlobal();
+        if (p && typeof p.catch === 'function') {
+          p.catch(err => console.warn('initGlobal error (non-fatal):', err));
+        }
+      } catch (err) {
+        console.warn('initGlobal threw (non-fatal):', err);
+      }
+
+      // Hide the loader once initGlobal has kicked off
+      setTimeout(() => {
+        const loader = document.getElementById('loadingScreen');
+        if (loader) {
+          loader.classList.add('hidden');
+          setTimeout(() => { loader.style.display = 'none'; }, 500);
+        }
+      }, 400);
+    });
+  </script>
+
+  <script>
+    // Back to top logic
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) backToTopBtn.classList.add('show');
+        else backToTopBtn.classList.remove('show');
+      });
+      backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+
+    // Mini Partner Modal Logic
+    const partnerModal = document.getElementById('partnerMiniModal');
+    const openPartnerBtn = document.getElementById('openPartnerModalBtn');
+
+    if (openPartnerBtn && partnerModal) {
+      openPartnerBtn.addEventListener('click', () => {
+        partnerModal.hidden = false;
+        requestAnimationFrame(() => partnerModal.classList.add('open'));
+        document.body.style.overflow = 'hidden';
+      });
+    }
+
+    partnerModal?.querySelectorAll('[data-partner-close]').forEach(el => {
+      el.addEventListener('click', () => {
+        partnerModal.classList.remove('open');
+        setTimeout(() => {
+          partnerModal.hidden = true;
+          document.body.style.overflow = '';
+        }, 250);
+      });
+    });
+
+        // Footer Partner Modal Logic
+    const footerPartnerLink = document.getElementById('footerPartnerLink');
+    const partnerModalEl = document.getElementById('partnerModal');
+    const partnerModalBackdrop = document.getElementById('partnerModalBackdrop');
+    const partnerModalClose = document.getElementById('partnerModalClose');
+
+    if (footerPartnerLink && partnerModalEl) {
+      footerPartnerLink.addEventListener('click', (e) => {
+        e.preventDefault(); // Stop the page from jumping
+        partnerModalEl.hidden = false;
+        requestAnimationFrame(() => partnerModalEl.classList.add('open'));
+        document.body.style.overflow = 'hidden';
+      });
+    }
+
+    if (partnerModalClose && partnerModalEl) {
+      partnerModalClose.addEventListener('click', () => {
+        partnerModalEl.classList.remove('open');
+        setTimeout(() => {
+          partnerModalEl.hidden = true;
+          document.body.style.overflow = '';
+        }, 250);
+      });
+    }
+
+    if (partnerModalBackdrop && partnerModalEl) {
+      partnerModalBackdrop.addEventListener('click', () => {
+        partnerModalEl.classList.remove('open');
+        setTimeout(() => {
+          partnerModalEl.hidden = true;
+          document.body.style.overflow = '';
+        }, 250);
+      });
+    }
+  </script>
+</body>
+</html>

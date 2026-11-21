@@ -1,0 +1,165 @@
+/* ===== Register Page Specific Styles ===== */
+.register-page .auth-box {
+  max-width: 420px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.register-page .auth-box .form-group {
+  margin-bottom: 1rem;
+}
+
+.register-page .auth-box .form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.register-page .auth-box .form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.register-page .auth-box .form-group input:focus {
+  border-color: var(--orange);
+  outline: none;
+}
+
+.register-page .auth-box .btn-primary {
+  width: 100%;
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 40px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.register-page .auth-box .btn-primary:hover {
+  background: var(--orange-dark);
+}
+
+.register-page .auth-box .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.register-page .auth-box .auth-status {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.register-page .auth-box .auth-status.success {
+  color: #15803D;
+}
+
+.register-page .auth-box .auth-status.error {
+  color: #B91C1C;
+}
+
+.register-page .auth-box .auth-status.verifying {
+  color: var(--orange);
+}
+
+.register-page .auth-links {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.register-page .auth-links a {
+  color: var(--orange);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.register-page .auth-links a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Install Banner ===== */
+.install-banner {
+  background: var(--navy);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--orange);
+}
+
+.install-banner.hidden {
+  display: none;
+}
+
+.install-banner p {
+  font-size: 13px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.install-banner p span {
+  color: var(--orange);
+}
+
+.banner-install-btn {
+  padding: 6px 14px;
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.banner-install-btn:hover {
+  background: var(--orange-dark);
+}
+
+.banner-dismiss {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.banner-dismiss:hover {
+  color: #fff;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .register-page .auth-box {
+    padding: 1.5rem 1rem;
+  }
+  
+  .register-page .auth-box h1 {
+    font-size: 1.2rem;
+  }
+  
+  .register-page .auth-box .form-group input {
+    font-size: 0.9rem;
+    padding: 8px 10px;
+  }
+  
+  .install-banner p {
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <title>Create an account — Ghost Stores</title>
+  
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="css/store-auth.css" />
+</head>
+<body class="gs-auth-body">
+
+  <!-- HEADER -->
+  <header class="gs-auth-header">
+    <a href="index.html" class="gs-brand gs-brand-inline" style="text-decoration:none;">
+      <img src="img/icon-192.png" alt="Ghost Stores" width="36" height="36" />
+      <h1 class="gs-brand-title gs-brand-title-sm">Ghost <span class="gs-pill">Store</span></h1>
+    </a>
+    
+    <div class="gs-auth-nav">
+      <div class="desktop-auth-nav" style="display:flex; gap:12px;">
+        <a href="index.html" class="gs-btn gs-btn-secondary">Home</a>
+        <a href="login.html" class="gs-btn gs-btn-primary">Login</a>
+      </div>
+      <div class="gs-mobile-auth-toggle" id="mobileAuthToggle">
+        <button class="gs-btn gs-btn-secondary" id="authAccessBtn">
+          Access <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="gs-mobile-auth-dropdown" id="mobileAuthDropdown">
+          <a href="index.html"><i class="fas fa-home"></i> Home</a>
+          <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="gs-auth-main">
+    <div class="gs-auth-card" style="max-width: 480px;">
+      
+      <h2 class="gs-auth-title">Create an account</h2>
+      
+      <div class="gs-tabs" role="tablist" style="margin-bottom:16px;">
+        <button class="gs-tab active" type="button" data-tab="owner" role="tab" aria-selected="true">
+          I'm a store owner
+        </button>
+        <button class="gs-tab" type="button" data-tab="manager" role="tab" aria-selected="false">
+          I'm a manager
+        </button>
+      </div>
+
+      <!-- ============ OWNER FORM ============ -->
+      <form id="ownerForm" class="gs-form gs-form-compact" autocomplete="on">
+        <div class="gs-field">
+          <label for="ownerName">Full name *</label>
+          <input type="text" id="ownerName" name="ownerName" autocomplete="name" required />
+        </div>
+        <div class="gs-field">
+          <label for="ownerEmail">Email address *</label>
+          <input type="email" id="ownerEmail" name="email" autocomplete="email" required />
+        </div>
+        <div class="gs-field">
+          <label for="ownerPhone">Mobile number *</label>
+          <div class="gs-phone">
+            <span class="gs-phone-prefix">+27</span>
+            <input type="tel" id="ownerPhone" name="phone" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="82 123 4567" required />
+          </div>
+        </div>
+        <div class="gs-field">
+          <label for="ownerStoreName">Store name *</label>
+          <input type="text" id="ownerStoreName" name="storeName" placeholder="e.g. Golden Gate Super Cash &amp; Carry" required />
+        </div>
+        <div class="gs-field">
+          <label for="ownerArea">Area / suburb *</label>
+          <input type="text" id="ownerArea" name="area" placeholder="e.g. Verulam" required />
+        </div>
+        <div class="gs-field">
+          <label for="ownerPassword">Password *</label>
+          <div class="gs-password-wrap">
+            <input type="password" id="ownerPassword" name="password" autocomplete="new-password" minlength="8" required />
+            <button type="button" class="gs-password-toggle" onclick="togglePassword('ownerPassword', this)">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <label class="gs-checkbox" style="margin-top:8px; font-size:0.8rem; align-items:flex-start;">
+          <input type="checkbox" id="termsCheck" required style="margin-top:3px;" />
+          <span>I agree to the <a href="#" onclick="openLegalModal('terms'); return false;" style="color:var(--orange); font-weight:700;">Terms & Conditions</a> and <a href="#" onclick="openLegalModal('privacy'); return false;" style="color:var(--orange); font-weight:700;">Privacy Policy</a>.</span>
+        </label>
+
+        <button type="submit" class="gs-btn gs-btn-primary gs-btn-full" style="margin-top:12px;">
+          <i class="fas fa-user-plus" aria-hidden="true"></i> Create owner account
+        </button>
+
+        <div id="ownerMessage" class="gs-message" role="status" aria-live="polite"></div>
+        
+        <div class="gs-auth-footer" style="padding-top:12px; margin-top:8px;">
+          <p>Already have an account? <a href="login.html">Sign in</a></p>
+        </div>
+      </form>
+
+      <!-- ============ MANAGER FORM ============ -->
+      <form id="managerForm" class="gs-form gs-form-compact" autocomplete="on" style="display:none;">
+        <div class="gs-field">
+          <label for="managerName">Full name *</label>
+          <input type="text" id="managerName" name="managerName" autocomplete="name" required />
+        </div>
+        <div class="gs-field">
+          <label for="managerEmail">Email address *</label>
+          <input type="email" id="managerEmail" name="email" autocomplete="email" required />
+        </div>
+        <div class="gs-field">
+          <label for="managerStore">Which store? *</label>
+          <select id="managerStore" name="storeId" required>
+            <option value="">Loading stores…</option>
+          </select>
+          <small class="gs-hint" id="managerStoreHint">Only approved stores appear here.</small>
+        </div>
+        <div class="gs-field">
+          <label for="managerPassword">Password *</label>
+          <div class="gs-password-wrap">
+            <input type="password" id="managerPassword" name="password" autocomplete="new-password" minlength="8" required />
+            <button type="button" class="gs-password-toggle" onclick="togglePassword('managerPassword', this)">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <label class="gs-checkbox" style="margin-top:8px; font-size:0.8rem; align-items:flex-start;">
+          <input type="checkbox" id="termsCheckManager" required style="margin-top:3px;" />
+          <span>I agree to the <a href="#" onclick="openLegalModal('terms'); return false;" style="color:var(--orange); font-weight:700;">Terms & Conditions</a> and <a href="#" onclick="openLegalModal('privacy'); return false;" style="color:var(--orange); font-weight:700;">Privacy Policy</a>.</span>
+        </label>
+
+        <button type="submit" class="gs-btn gs-btn-primary gs-btn-full" style="margin-top:12px;">
+          <i class="fas fa-user-plus" aria-hidden="true"></i> Request manager access
+        </button>
+
+        <div id="managerMessage" class="gs-message" role="status" aria-live="polite"></div>
+
+        <div class="gs-auth-footer" style="padding-top:12px; margin-top:8px;">
+          <p>Already have an account? <a href="login.html">Sign in</a></p>
+        </div>
+      </form>
+      
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="gs-auth-page-footer">
+    &copy; 2026 Ghost Shopper | Cloudskunk Hosting. All rights reserved.
+  </footer>
+
+  <!-- INSTALL BANNER (Moved outside form) -->
+  <div id="gsInstallBanner" class="gs-install-banner">
+    <img src="img/icon-192.png" alt="Ghost Store" />
+    <div class="gs-install-text">
+      <h4>Install Ghost Store</h4>
+      <p>Add to home screen for quick access.</p>
+    </div>
+    <div class="gs-install-actions">
+      <button class="gs-install-btn" id="gsInstallBtn">Install</button>
+      <button class="gs-install-close" onclick="dismissInstallBanner()">&times;</button>
+    </div>
+  </div>
+
+  <!-- LEGAL MODAL -->
+  <div class="gs-modal-overlay" id="legalModal" style="z-index:1000;">
+    <div class="gs-modal-content gs-legal-modal-content" style="max-width: 600px;">
+      <button class="gs-modal-close" onclick="closeLegalModal()">&times;</button>
+      <div id="legalContent"></div>
+      <button class="gs-btn gs-btn-primary gs-btn-full" style="margin-top:20px;" onclick="closeLegalModal()">Got it</button>
+    </div>
+  </div>
+
+  <script src="config/env.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/store-register.js"></script>
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+      });
+    }
+
+    // PWA Install Prompt Logic
+    let deferredInstallPrompt = null;
+    const banner = document.getElementById('gsInstallBanner');
+    const installBtn = document.getElementById('gsInstallBtn');
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const wasDismissed = localStorage.getItem('gs_install_dismissed');
+
+    // Show banner if not installed and not dismissed
+    if (!isStandalone && !wasDismissed && banner) {
+      setTimeout(() => banner.classList.add('show'), 1500); // Small delay for smooth entry
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    });
+
+    installBtn?.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) {
+        alert('To install: tap your browser menu (or Share button on iOS) and select "Add to Home Screen".');
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        banner.classList.remove('show');
+        localStorage.setItem('gs_install_dismissed', 'true');
+      }
+      deferredInstallPrompt = null;
+    });
+
+    function dismissInstallBanner() {
+      banner.classList.remove('show');
+      localStorage.setItem('gs_install_dismissed', 'true');
+    }
+
+    // Mobile nav toggle
+    document.getElementById('authAccessBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('mobileAuthDropdown').classList.toggle('active');
+    });
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('mobileAuthToggle')?.contains(e.target)) {
+        document.getElementById('mobileAuthDropdown')?.classList.remove('active');
+      }
+    });
+
+    // Password Toggle
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        input.type = 'password';
+        btn.innerHTML = '<i class="fas fa-eye"></i>';
+      }
+    }
+
+    // Legal Modal Logic
+    const legalData = {
+      terms: `
+        <h3 style="text-align:center; color:var(--navy); margin-bottom:16px;">Terms & Conditions</h3>
+        <p>By registering as a store or manager on Ghost Stores, you agree to the following terms:</p>
+        <h4>1. Account Responsibility</h4>
+        <p>You are responsible for maintaining the confidentiality of your login details. Store owners are responsible for all actions taken by managers they add to their account.</p>
+        <h4>2. Accurate Information</h4>
+        <p>You agree to provide accurate store information, pricing, and stock availability. Ghost Shopper reserves the right to verify your details and suspend accounts that provide false information.</p>
+        <h4>3. Order Fulfillment</h4>
+        <p>As a partner, you agree to accept and fulfill orders in a timely manner. Frequent unfulfilled orders may result in your store being temporarily or permanently removed from the platform.</p>
+        <h4>4. Commission & Fees</h4>
+        <p>Ghost Shopper operates on a service fee/commission structure which will be communicated to you separately. By using the platform, you agree to these fees being deducted from your earnings.</p>
+      `,
+      privacy: `
+        <h3 style="text-align:center; color:var(--navy); margin-bottom:16px;">Privacy Policy</h3>
+        <p>We take your privacy seriously. Here is how we handle your data:</p>
+        <h4>1. Data Collection</h4>
+        <p>We collect your name, email, phone number, and store details to create and manage your account. We do not sell your personal information to third parties.</p>
+        <h4>2. Customer Data</h4>
+        <p>You will receive customer order details (name, address, phone) only for the purpose of fulfilling and delivering that specific order. You may not use this data for marketing or any other purpose.</p>
+        <h4>3. Financial Data</h4>
+        <p>Your bank details for payouts are stored securely. We use industry-standard encryption and do not store full card details on our servers.</p>
+        <h4>4. Communication</h4>
+        <p>By registering, you agree to receive operational emails regarding your account, such as password resets and order notifications.</p>
+      `
+    };
+
+    window.openLegalModal = function(type) {
+      const content = legalData[type];
+      if (content) {
+        document.getElementById('legalContent').innerHTML = content;
+        document.getElementById('legalModal').classList.add('active');
+      }
+    };
+
+    window.closeLegalModal = function() {
+      document.getElementById('legalModal').classList.remove('active');
+    };
+    
+    // Close modal on outside click
+    document.getElementById('legalModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'legalModal') closeLegalModal();
+    });
+  </script>
+</body>
+</html>

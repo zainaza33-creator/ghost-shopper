@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Stores — Partner with Ghost Shopper. The portal for store owners and managers to manage their online storefront, products, and specials." />
+  <title>Ghost Stores — Grow your business with Ghost Shopper</title>
+  
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="css/store-auth.css" />
+
+  <!-- Specific overrides for the homepage layout fixes -->
+  <style>
+    /* 1. Slider Dots */
+    .gs-slider-dots {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+    .gs-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .gs-dot.active {
+      background: var(--orange);
+      transform: scale(1.3);
+      box-shadow: 0 0 10px rgba(249,115,22,0.5);
+    }
+
+    /* 2. Hero Text */
+    .gs-hero-title {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .gs-hero-title em {
+      color: var(--orange);
+      font-style: normal;
+    }
+    .gs-hero-sub {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.85);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .gs-btn-slide-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      color: var(--navy);
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 14px 24px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      margin-top: 10px;
+    }
+    .gs-btn-slide-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255,255,255,0.2);
+    }
+    .gs-btn-slide { margin-top: 10px; }
+
+    /* 3. SQUARE STEP CARDS (Fixed Alignment) */
+    .gs-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      align-items: stretch; /* Forces all cards to be the same height */
+    }
+    .gs-step-card {
+      aspect-ratio: 1 / 1; 
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start; /* Aligns content to top */
+      padding: 24px 20px;
+      text-align: center;
+      cursor: pointer; 
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .gs-step-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--orange);
+    }
+    .gs-step-icon {
+      font-size: 1.8rem;
+      color: var(--orange);
+      background: var(--orange-soft);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px auto;
+    }
+    .gs-step-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .gs-step-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; /* Limit to 2 lines so it doesn't push the button */
+      line-clamp: 2;  
+      -webkit-box-orient: vertical;  
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .gs-btn-text {
+      background: var(--bg); /* Gives it a button look */
+      border: 1px solid var(--border);
+      color: var(--navy);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      text-decoration: none; /* Removes underline */
+      margin-top: auto; /* Pushes button to the bottom */
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      width: 100%;
+      display: block;
+    }
+    .gs-step-card:hover .gs-btn-text {
+      background: var(--orange-soft);
+      color: var(--orange-dark);
+      border-color: var(--orange-soft);
+    }
+
+    /* 4. Team Layout Fix (Mobile) */
+    @media (max-width: 900px) {
+      .gs-section-inner-row {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 20px;
+      }
+      .gs-section-icon-large {
+        flex: 0 0 150px;
+        height: 150px;
+        width: 150px;
+        font-size: 3rem;
+        margin-bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body class="gs-home-body">
+
+  <!-- ==================== HERO SLIDER ==================== -->
+  <section class="gs-hero gs-hero-slider">
+    
+    <nav class="gs-home-nav" id="homeNav">
+      <div class="gs-home-nav-inner">
+        <a href="index.html" class="gs-brand gs-brand-inline gs-logo-transparent">
+          <img src="img/icon-192.png" alt="Ghost Stores" width="40" height="40" />
+          <h1 class="gs-brand-title gs-brand-title-sm gs-title-white">Ghost <span class="gs-pill">Store</span></h1>
+        </a>
+        
+        <div class="gs-home-nav-actions desktop-only-nav">
+          <a href="login.html" class="gs-btn gs-btn-nav gs-btn-hero-outline">Login</a>
+          <a href="register.html" class="gs-btn gs-btn-primary gs-btn-nav">Sign Up</a>
+        </div>
+
+        <div class="gs-mobile-nav-toggle" id="mobileNavToggle">
+          <button class="gs-btn gs-btn-nav gs-btn-hero-outline" id="accessBtn">
+            Access <i class="fas fa-chevron-down" aria-hidden="true"></i>
+          </button>
+          <div class="gs-mobile-dropdown" id="mobileDropdown">
+            <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="register.html"><i class="fas fa-user-plus"></i> Register</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="gs-hero-inner gs-slider-container">
+      
+      <div class="gs-slide active" data-slide="0">
+        <div class="gs-slide-content">
+          <div class="gs-slide-icon"><i class="fas fa-file-signature"></i></div>
+          <h1 class="gs-hero-title">Register your <em>store.</em></h1>
+          <p class="gs-hero-sub">Fill in the form to get started. Your application will be sent directly to the admin team for approval.</p>
+          <a href="register.html" class="gs-btn gs-btn-primary gs-btn-slide">Register Now</a>
+        </div>
+      </div>
+
+      <div class="gs-slide" data-slide="1">
+        <div class="gs-slide-content">
+          <div class="gs-slide-icon"><i class="fas fa-shield-alt"></i></div>
+          <h1 class="gs-hero-title">Get <em>approved.</em></h1>
+          <p class="gs-hero-sub">We verify your information to ensure safety. Once approved, you gain full access to your store dashboard.</p>
+        </div>
+      </div>
+
+      <div class="gs-slide" data-slide="2">
+        <div class="gs-slide-content">
+          <div class="gs-slide-icon"><i class="fas fa-box-open"></i></div>
+          <h1 class="gs-hero-title">Add your <em>products.</em></h1>
+          <p class="gs-hero-sub">Upload your logo, set trading hours, and start adding your inventory. Ready to manage your store?</p>
+          <a href="login.html" class="gs-btn gs-btn-slide-primary">Login to Dashboard <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+    </div>
+    
+    <div class="gs-slider-dots">
+      <span class="gs-dot active" data-slide="0"></span>
+      <span class="gs-dot" data-slide="1"></span>
+      <span class="gs-dot" data-slide="2"></span>
+    </div>
+  </section>
+
+  <!-- ==================== HOW IT WORKS ==================== -->
+  <section class="gs-section" id="how-it-works">
+    <div class="gs-section-head">
+      <h2 class="gs-section-title">How it works</h2>
+      <p class="gs-section-sub">From registration to your first delivery, we've made it simple.</p>
+    </div>
+
+    <div class="gs-steps">
+      <!-- Step 1 -->
+      <div class="gs-step-card" onclick="openStepModal(1)">
+        <div class="gs-step-icon"><i class="fas fa-file-signature"></i></div>
+        <h3 class="gs-step-title">Register your store</h3>
+        <p class="gs-step-desc">Click Register and fill in your details. You will need your store name, area, and a secure password.</p>
+        <span class="gs-btn-text">Learn More</span>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="gs-step-card" onclick="openStepModal(2)">
+        <div class="gs-step-icon"><i class="fas fa-check-circle"></i></div>
+        <h3 class="gs-step-title">Verification & Approval</h3>
+        <p class="gs-step-desc">Our team manually reviews every application. Once verified, your owner account is approved.</p>
+        <span class="gs-btn-text">Learn More</span>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="gs-step-card" onclick="openStepModal(3)">
+        <div class="gs-step-icon"><i class="fas fa-box-open"></i></div>
+        <h3 class="gs-step-title">Build your storefront</h3>
+        <p class="gs-step-desc">Log in to your dashboard to add your logo, upload trading hours, and start adding your products.</p>
+        <span class="gs-btn-text">Learn More</span>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="gs-step-card" onclick="openStepModal(4)">
+        <div class="gs-step-icon"><i class="fas fa-globe"></i></div>
+        <h3 class="gs-step-title">Go Live & Deliver</h3>
+        <p class="gs-step-desc">Once your profile is complete, our admin team reviews it one final time and publishes your store.</p>
+        <span class="gs-btn-text">Learn More</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MANAGERS ==================== -->
+  <section class="gs-section gs-section-alt">
+    <div class="gs-section-inner-row">
+      
+      <div class="gs-section-icon-large" style="margin-bottom: 20px;">
+        <i class="fas fa-users-cog"></i>
+      </div>
+      
+      <div class="gs-section-text" style="text-align: center;">
+        <h2 class="gs-section-title">Manage your team</h2>
+        <p class="gs-section-desc">
+          As the owner, you can add managers to your store directly from your dashboard. Managers can log in with their own email, upload products, change prices, and add flyers.
+        </p>
+        <p class="gs-section-desc">
+          <strong>Your control stays absolute.</strong> You choose exactly what they can see and do. You can remove a manager instantly if they leave the business.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SPECIALS ==================== -->
+  <section class="gs-section">
+    <div class="gs-section-inner-row gs-section-row-reverse">
+      <div class="gs-section-icon-large gs-icon-orange">
+        <i class="fas fa-tags"></i>
+      </div>
+      <div class="gs-section-text">
+        <h2 class="gs-section-title">Run specials and flyers</h2>
+        <p class="gs-section-desc">
+          Attract more customers by adding flyers and running weekly specials. When you add a product, mark it as "On Special".
+        </p>
+        <p class="gs-section-desc">
+          Set the special price and exactly how long the special runs for. Our system automatically displays this to customers.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MODAL CONTAINER ==================== -->
+  <div class="gs-modal-overlay" id="stepModal">
+    <div class="gs-modal-content">
+      <button class="gs-modal-close" id="closeModal">&times;</button>
+      <div class="gs-modal-icon" id="modalIcon"></div>
+      <h3 class="gs-modal-title" id="modalTitle"></h3>
+      <p class="gs-modal-desc" id="modalDesc"></p>
+      <button class="gs-btn gs-btn-primary gs-btn-full" id="modalGotItBtn">Got it</button>
+    </div>
+  </div>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="gs-home-footer">
+    <div class="gs-footer-inner">
+      
+      <div class="gs-footer-col gs-footer-brand-col">
+        <div class="gs-brand gs-brand-inline gs-logo-transparent" style="margin-bottom:10px;">
+          <img src="img/icon-192.png" alt="Ghost Stores" width="32" height="32" />
+          <h1 class="gs-brand-title gs-brand-title-sm gs-title-white">Ghost <span class="gs-pill">Store</span></h1>
+        </div>
+        <p class="gs-footer-mini-info">The partner portal for Ghost Shopper. Manage your store, products, and specials.</p>
+        <div class="gs-footer-social-section">
+          <h4 class="gs-footer-social-header">Social Links</h4>
+          <div class="gs-footer-social">
+            <a href="https://wa.me/27628989813" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a href="https://web.facebook.com/profile.php?id=61589902767644" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://ghostshopza.web.app" target="_blank" rel="noopener" aria-label="Ghost Shopper"><i class="fas fa-shopping-bag"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="gs-footer-col">
+        <h4 class="gs-footer-header">Quick Links</h4>
+        <div class="gs-footer-links">
+          <a href="login.html">Login</a>
+          <a href="register.html">Register</a>
+          <a href="#" onclick="alert('Terms and Conditions content coming soon.'); return false;">Terms & Conditions</a>
+          <a href="#" onclick="alert('Privacy Policy content coming soon.'); return false;">Privacy Policy</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="gs-footer-bottom">
+      <p>&copy; 2026 Ghost Shopper | Cloudskunk Hosting. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Back to Top -->
+  <button id="backToTop" class="gs-back-to-top" aria-label="Back to top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <script src="js/store-home.js"></script>
+</body>
+</html>

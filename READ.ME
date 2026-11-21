@@ -1,0 +1,3106 @@
+Here's the README. Save it as `README.md` at the project root (`C:\Users\MaryS\OneDrive\Desktop\Ghost Shopper\README.md`).
+
+It's structured so an AI can read the first ~200 lines and be caught up, and a developer can dig into the deeper sections.
+
+---
+
+```markdown
+# Ghost Shopper — Project README
+
+**Last updated:** 16 September 2026
+**Status:** Live in production (Verulam, KZN). Customer-facing homepage recently rebuilt.
+**Repo root:** `C:\Users\MaryS\OneDrive\Desktop\Ghost Shopper`
+
+---
+
+## 0. TL;DR for AI assistants picking this up
+
+Read this section and you can safely work on the codebase.
+
+- **What it is:** A hyperlocal delivery PWA for Verulam, KwaZulu-Natal, South Africa. Customers order from local stores, local riders deliver. Think "Uber Eats for groceries, but hyperlocal and one store per cart."
+- **Stack:** Vanilla HTML + CSS + JS (ES modules, no bundler), Firebase (Hosting, Firestore, Auth, Functions v2, Storage, FCM), PWA (service workers + manifest). No React. No build step.
+- **Deploy:** Firebase Hosting, project `ghostshopza`. `cleanUrls: true` in `firebase.json` means `/cart` and `/cart.html` both work on prod, but **local dev requires the `.html` extension in hrefs** — so always write `.html` in code.
+- **Currency:** ZAR. Delivery fee is dynamic per area, default R35. Payments via Yoco (card), plus an in-app wallet and split payments.
+- **Firebase region:** `africa-south1` for Firestore.
+- **Main dev environment:** Local machine via Live Server (VSCode) at `127.0.0.1:5500/public/`.
+
+### DO NOT CHANGE without explicit approval
+
+These are firm constraints from the business owner:
+
+1. **Do NOT migrate to React.** The project stays vanilla JS. Structural improvements are welcome; framework rewrites are not.
+2. **Do NOT replace Yoco** as the payment processor.
+3. **Do NOT change the order/payment flow** without testing end-to-end on staging first.
+4. **Do NOT delete `admin.js` at the project root** until the modular admin in `public/admin/js/` is feature-complete.
+5. **Do NOT alter Firestore security rules** without reviewing all affected clients.
+6. **Do NOT change delivery pricing logic** without checking the admin `settings` documents.
+7. **Do NOT commit Yoco secret keys** to source. They currently sit in `functions/index.js` and need to move to Secret Manager (see Known Issues).
+
+### Key file map
+
+| File | Purpose |
+|---|---|
+| `public/index.html` + `public/js/index.js` + `public/css/index.css` | Customer homepage — recently rebuilt, uses `base.css` + `index.css` |
+| `public/js/global.js` | Shared runtime: auth modal, account sheet, bottom nav, address search, notifications, cookie consent, PWA, legal modals |
+| `public/js/firebase-config.js` | Firebase init, re-exports Firestore/Auth helpers |
+| `public/js/cart-utils.js` | Cart CRUD, badge updates. `addToCart(product, qty, storeName, storeId)` enforces single-store rule. |
+| `public/config/env.js` | Client-side config (Firebase web config, Google Maps key) via `window.__ENV` |
+| `functions/index.js` | Cloud Functions v2: order lifecycle, refunds, driver dispatch, Yoco webhook, PWA install tracking |
+| `admin.js` (root) | OLD monolithic admin (140 KB, still in use). |
+| `public/admin/js/*` | NEW modular admin (mid-migration, incomplete). |
+| `sw.js` | Service worker (cache + offline fallback) |
+| `firebase-messaging-sw.js` | FCM service worker (push notifications) |
+
+---
+
+## 1. Business context
+
+**Business name:** Ghost Shopper
+**Operating entity:** CloudSkunk (payments appear on bank statements as "CloudSkunk" or "CloudSkunk Hosting")
+**Service area:** Verulam, KwaZulu-Natal, South Africa. Expanding outward over time.
+**Store partnerships:** Local supermarkets, butcheries, bakeries, pharmacies.
+**Delivery fee:** Starts from R35, dynamic per area.
+**Typical delivery window:** Around 1 hour from order confirmation.
+**Contact:** WhatsApp +27 62 898 9813, email wedeliverzn@gmail.com, Facebook page.
+
+### Core rules of the business
+
+- **One store per cart.** A user cannot mix items from different stores in one order.
+- **No product markup.** The customer pays the store's listed price plus the delivery fee.
+- **No cash on delivery.** All orders are paid online.
+- **No cancellations after payment.** Once the store has the order, it's committed.
+- **Alternates.** If a customer's item is out of stock, the customer can pre-select an alternate. If no alternate, the amount goes to the customer's wallet as a credit.
+- **Wallet refunds.** Wallet balance can be spent on future orders, or refunded to bank (3–7 business days).
+
+### What the homepage rebuild changed (Sept 2026)
+
+Over one full day, the customer homepage was rebuilt:
+
+- Hero now has a **full-bleed background image** with a dark gradient overlay for legibility
+- Hero address search rebuilt as a **white pill with orange ring**, hooked to Google Places autocomplete
+- **Loader** redesigned: spinner + "Local deliveries made easy..." with animated dots + logo below, hides once critical content is ready (6s ceiling)
+- **Weekly Specials** cards now have a **+ button** that opens a product modal with quantity, alternatives, and Add to Cart
+- **See More tile** appears as the 11th card if there are more than 10 specials/stores, opens a modal with search
+- **Shop by Category** now filters the "Stores Near You" grid inline instead of navigating away
+- **FAQ accordion** with rounded cards and smooth expand/collapse
+- **Install prompt** moved from a header banner to a bottom-sheet popup
+- **Announcement popup** for new-store announcements (backed by `announcements` Firestore collection)
+- **Partner with Us** modal in footer (email + WhatsApp options with pre-filled template)
+- **Auth modal** now phone-only: `+27` fixed prefix, user enters 9 digits, OTP, signed in. Name is captured later on the account page.
+- **Legal modals** (terms/privacy/cookies) restyled with sticky headers
+- **`404.html`** and **`offline.html`** pages created
+- **CSS split:** `base.css` (shared components) + `index.css` (homepage only)
+- **`global.js` fixed:** auth modal cleanup, missing `closeLegalModal`, legal modal stacking above auth modal, `.html` extension in navigation paths
+
+---
+
+## 2. Tech stack (detail)
+
+| Layer | Technology |
+|---|---|
+| Hosting | Firebase Hosting (`ghostshopza.web.app`, `ghostshopza.firebaseapp.com`) |
+| Database | Firestore (`africa-south1`) |
+| Auth | Firebase Auth — Phone Number sign-in with reCAPTCHA |
+| Functions | Firebase Cloud Functions v2 (Node.js) |
+| Storage | Firebase Storage (`ghostshopza.firebasestorage.app`) |
+| Push | Firebase Cloud Messaging (FCM) with VAPID key |
+| Payments | Yoco (card checkout via hosted redirect, plus webhook) |
+| Maps | Google Maps JavaScript API + Places API |
+| Fonts | Inter (Google Fonts) |
+| Icons | Font Awesome 6.0.0-beta3 (CDN) |
+| PWA | Manifest + two service workers (`sw.js`, `firebase-messaging-sw.js`) |
+| Build | **None.** ES modules loaded directly from `<script type="module">`. |
+
+### Why no bundler
+
+Deliberate choice to avoid build complexity. The project owner is not a professional developer and works primarily with AI assistants, so keeping the source → deploy path simple (edit file → Firebase serves it) is more valuable than tree-shaking. This may change later but is not a current priority.
+
+---
+
+## 3. Project structure
+
+```
+Ghost Shopper/
+├── .firebaserc              → default project: ghostshopza
+├── firebase.json            → hosting, functions, emulators, CSP headers
+├── firestore-debug.log      → local emulator log (gitignored)
+├── storage.rules            → Firebase Storage security rules
+├── package.json             → only dependency: firebase ^12.14.0 (root)
+├── admin.js                 → OLD monolithic admin (140 KB) — still live
+│
+├── functions/
+│   ├── index.js             → all Cloud Functions (order, refund, driver, Yoco, FCM)
+│   ├── package.json
+│   └── node_modules/
+│
+└── public/                  → everything Firebase Hosting serves
+    ├── index.html           → customer homepage (rebuilt)
+    ├── 404.html             → not-found page (new)
+    ├── offline.html         → offline fallback page (new)
+    ├── cart.html            → cart page
+    ├── checkout.html        → checkout (3-step: account, address, payment)
+    ├── stores.html          → all stores
+    ├── store.html           → individual store
+    ├── order-confirmation.html
+    ├── my-orders.html
+    ├── account.html
+    ├── login.html
+    ├── notifications.html
+    ├── store-accept.html    → store owner accepts an order (via WhatsApp link)
+    ├── driver-login.html
+    ├── driver-register.html
+    ├── driver-dashboard.html
+    ├── manifest.json        → PWA manifest
+    ├── sw.js                → service worker
+    ├── firebase-messaging-sw.js
+    │
+    ├── admin/               → NEW modular admin (mid-migration)
+    │   ├── admin.html
+    │   ├── config/
+    │   ├── css/
+    │   └── js/              → 17 files, ~190 KB total
+    │
+    ├── config/
+    │   ├── env.js           → window.__ENV = { FIREBASE, GOOGLE_MAPS_API_KEY, APP }
+    │   └── local-config.json
+    │
+    ├── css/                 → 16 files, ~368 KB total
+    │   ├── base.css         → SHARED components (navbar, bottom nav, buttons, modals, toast, cookie banner, account sheet, legal modal, install sheet, announcement sheet) [new]
+    │   ├── index.css        → homepage only (hero, specials, cats, stores, how, about, why, faq, footer) [rebuilt]
+    │   ├── account.css
+    │   ├── admin.css
+    │   ├── cart.css
+    │   ├── checkout.css
+    │   ├── driver-auth.css
+    │   ├── driver-dashboard.css
+    │   ├── driver-register.css
+    │   ├── login.css
+    │   ├── main.css
+    │   ├── my-orders.css
+    │   ├── notifications.css
+    │   ├── order-confirmation.css
+    │   ├── store-accept.css
+    │   ├── store.css
+    │   └── stores.css
+    │
+    ├── js/                  → 18 files, ~434 KB total
+    │   ├── firebase-config.js        → init app + re-export Firestore/Auth helpers
+    │   ├── global.js                 → shared runtime (52 KB)
+    │   ├── cart-utils.js             → cart helpers
+    │   ├── analytics.js              → analytics events
+    │   ├── index.js                  → homepage (rebuilt)
+    │   ├── cart.js
+    │   ├── checkout.js
+    │   ├── store.js
+    │   ├── stores.js
+    │   ├── account.js
+    │   ├── login.js
+    │   ├── my-orders.js
+    │   ├── notifications.js
+    │   ├── order-confirmation.js
+    │   ├── store-accept.js
+    │   ├── driver-login.js
+    │   ├── driver-register.js
+    │   └── driver-dashboard.js
+    │
+    ├── modals/              → content for legal modals (fetched at runtime)
+    │   ├── privacy.html
+    │   ├── terms.html
+    │   └── cookies.html
+    │
+    └── img/                 → product images, logos, icons, placeholder.jpg
+```
+
+---
+
+## 4. Firestore data model
+
+Region: `africa-south1`. All timestamps are Firestore Timestamps unless noted.
+
+### `users/{uid}`
+
+```js
+{
+  name: string,               // optional, added on account page
+  phone: string,              // e.g. "+27821234567"
+  email: string,              // optional
+  role: "customer" | "driver" | "admin",
+  savedAddresses: [
+    { street, lat, lng, savedAt, isDefault }
+  ],
+  walletBalance: number,      // ZAR, credits from unavailable items
+  notificationsEnabled: boolean,
+  fcmTokens: [string],        // FCM device tokens
+  isOnline: boolean,          // drivers only
+  lastSeen: Timestamp,        // drivers only
+  approved: boolean,          // drivers only
+  suspended: boolean,         // drivers only
+  area: string,               // drivers only — delivery area
+  createdAt, updatedAt
+}
+```
+
+### `stores/{storeId}`
+
+```js
+{
+  name: string,
+  category: string,           // "supermarket" | "butchery" | "bakery" | "pharmacy" | "other"
+  categories: [string],       // optional — multi-category support
+  address: string,
+  phone: string,
+  whatsappPrimary: string,
+  whatsappSecondary: string,  // optional
+  logo: string,               // URL
+  description: string,
+  hours: string,              // "Mon-Fri 7:30am-6pm, Sat 7am-6pm, Sun 7:30am-5pm"
+  popular: boolean,
+  tags: [string],
+  flyers: [{ image, title }],
+  temporarilyClosed: boolean,
+  area: string,               // e.g. "Verulam"
+  deliveryFee: number,        // optional, overrides default
+  createdAt, updatedAt
+}
+```
+
+**Important — hours format:** always `"Mon-Fri 7:30am-6pm, Sat 7am-6pm, Sun 7:30am-5pm"`. The homepage and checkout both parse this to compute "Open now" status.
+
+### `products/{productId}`
+
+```js
+{
+  name: string,
+  storeId: string,
+  category: string,
+  desc: string,
+  weight: string,             // "500g", "1kg"
+  price: number,
+  oldPrice: number | null,    // for specials
+  image: string,
+  images: [string],           // additional images
+  stock: boolean,             // false = out of stock
+  createdAt, updatedAt
+}
+```
+
+### `specials/{specialId}`
+
+```js
+{
+  item: string,               // product name
+  store: string,              // store NAME (not id)
+  price: number,
+  oldPrice: number | null,
+  tag: string,                // "50% OFF"
+  image: string,
+  active: boolean,
+  endDate: Date,
+  createdAt, updatedAt
+}
+```
+
+Note: specials don't have a `productId` field yet — the homepage matches them to products by name. This is a known limitation (see Known Issues).
+
+### `orders/{orderId}`
+
+```js
+{
+  items: [{ id, name, price, quantity, image, alternate }],
+  subtotal: number,
+  deliveryFee: number,
+  total: number,
+  walletUsed: number,
+  cardAmount: number,
+  paymentMethod: "yoco" | "wallet" | "split",
+  paymentStatus: "pending" | "paid" | "wallet_paid" | "test_mode",
+  orderStatus: "pending_payment" | "confirmed" | "packing" | "packed" | "ready" | "assigned" | "collected" | "on_the_way" | "delivered" | "refunded",
+  customerId: string,
+  customerName, customerPhone, customerEmail,
+  deliveryAddress: { street, lat, lng },
+  timeSlot: { date, start, end, display },
+  store: string,              // store NAME
+  driverId, driverName, driverPhone,
+  storeAcceptToken, storeAcceptUrl,
+  storeAccepted, storeReady, storeNotified, packed,
+  notes: string,
+  refundAmount: number,
+  createdAt, updatedAt, paidAt, assignedAt
+}
+```
+
+### `pendingOrders/{id}`
+
+Created before Yoco redirect. Converted to `orders` after payment confirmed.
+
+### `areas/{areaId}`
+
+```js
+{
+  name: string,               // e.g. "Verulam"
+  fee: number,                // delivery fee for this area
+  active: boolean
+}
+```
+
+### `settings/{doc}`
+
+- `settings/delivery` → `{ fee: number }` (default delivery fee)
+- `settings/testMode` → `{ enabled: boolean }` (bypasses Yoco)
+- `settings/flags` → future feature flags
+
+### `announcements/{id}`
+
+```js
+{
+  title, message,
+  storeName, storeLogo, storeId,
+  image,                      // optional banner image
+  storeLink,                  // optional
+  facebookLink,               // optional
+  active: boolean,
+  startDate, endDate
+}
+```
+
+### `driverPayments`, `refundRequests`, `creditNotes`, `notifications`, `storeNotifications`, `analytics_*`
+
+Various operational collections. See `functions/index.js` for full schemas.
+
+---
+
+## 5. Auth flow
+
+**Phone-only sign-in.** Firebase Auth Phone Number provider with invisible reCAPTCHA.
+
+1. User opens auth modal from any page (`openAuthModal()` in `global.js`)
+2. `+27` is a fixed prefix (not part of the input value)
+3. User enters 9 digits
+4. `sendOtpBtn` → `signInWithPhoneNumber(auth, '+27' + digits, recaptchaVerifier)`
+5. OTP screen → user enters 6-digit code
+6. `confirm(code)` → Firebase signs the user in
+7. If this phone doesn't have a `users/{uid}` doc, one is created with `role: 'customer'`
+8. Signed in. Name is captured later on the account page.
+
+**Known constraints:**
+- reCAPTCHA can time out. The `setupRecaptcha()` helper handles this.
+- If the user's phone number already exists under a different UID (e.g. they reinstalled), the query on `users.where('phone', '==', phone)` will find them, but their UID will be different. This is a known unresolved edge case.
+
+---
+
+## 6. Cart flow
+
+Storage: `localStorage.ghostShopperCart` (array of items).
+
+**Item shape:**
+```js
+{
+  id,           // product ID or special ID
+  name,
+  store,        // store NAME
+  storeId,
+  price,
+  quantity,
+  image,
+  category,
+  alternate: { id, name, price, image } | undefined
+}
+```
+
+**Rules:**
+- `addToCart(product, quantity, storeName, storeId)` in `cart-utils.js` enforces one-store-per-cart.
+- If adding from a different store, returns `{ success: false, message: '...' }`. Homepage shows a confirm dialog offering to clear the cart.
+- Cart badge is updated via `updateCartBadge()`.
+- Cart is synced across tabs via `window.addEventListener('storage', ...)`.
+
+---
+
+## 7. Order/payment flow
+
+**Checkout (`checkout.html` + `checkout.js`) is a 3-step wizard:**
+
+1. **Account** — must be signed in
+2. **Address** — Google Places autocomplete, map, time-slot picker. Validates against `areas` collection.
+3. **Payment** — Yoco card / Wallet / Split
+
+**Payment is via `createYocoCheckout` Cloud Function:**
+
+1. Client creates a doc in `pendingOrders` with the order data
+2. Client calls `createYocoCheckout` with the amount
+3. Function creates a Yoco checkout session, returns `redirectUrl`
+4. Client redirects to Yoco hosted page
+5. Yoco redirects back to `order-confirmation.html?token=...&pending=...`
+6. Client calls `verifyPayment` with the token
+7. `verifyPayment` verifies the JWT, moves `pendingOrders/{id}` → `orders/{id}`, sets `paymentStatus: 'paid'`
+8. Store is notified (WhatsApp deep link generated by `onOrderCreated`)
+9. Store accepts (via `storeAcceptOrder` on `store-accept.html`)
+10. Driver accepts (via `driverAcceptOrder` on `driver-dashboard.html`)
+11. Driver updates status (`driverUpdateOrder`)
+12. Customer sees updates live via Firestore listeners
+
+**Refund flow:**
+- Store marks items as unavailable
+- `storeAcceptOrder` calculates refund amount
+- `processRefundInternal` credits customer's `walletBalance`
+- FCM notification sent
+
+**Yoco keys:** Currently hardcoded in `functions/index.js` (`YOCO_TEST_SECRET_KEY`, `YOCO_LIVE_SECRET_KEY`). **These must be moved to Secret Manager** (see Known Issues).
+
+---
+
+## 8. Store acceptance flow
+
+When an order is paid:
+
+1. `onOrderCreated` writes a `storeNotifications` doc with the order details and a WhatsApp deep link
+2. Admin manually sends the WhatsApp message (or it can be automated later)
+3. Store owner opens the link → `store-accept.html?orderId=...&token=...`
+4. Store marks each item as accepted, out of stock, or alternate-accepted
+5. `storeAcceptOrder` Cloud Function updates the order, computes refunds, notifies the customer
+
+---
+
+## 9. Driver flow
+
+1. Driver registers at `driver-register.html` (uploads license, vehicle photos)
+2. Admin approves in the admin panel
+3. Driver goes online on `driver-dashboard.html`
+4. When a store marks an order as `ready`, `notifyDrivers` notifies online drivers in the same area
+5. Driver accepts via `driverAcceptOrder`
+6. Driver updates status via `driverUpdateOrder`: `collected` → `on_the_way` → `delivered`
+7. Driver gets paid — tracked in `drivers/{driverId}.totalEarnings` and `paidEarnings`
+8. `driverHeartbeat` keeps them marked online; `cleanupInactiveDrivers` sets them offline after 5 min silence
+
+---
+
+## 10. Admin structure
+
+**Two systems coexist (mid-migration):**
+
+### Old: `admin.js` (root, 140 KB)
+- Monolithic
+- Still the live admin
+- Includes all sections: dashboard, analytics, orders, refunds, drivers, stores, products, specials, areas, notifications, settings, test mode
+- Kept temporarily as the reference implementation
+
+### New: `public/admin/js/*` (17 files, ~190 KB)
+- Modular, mid-migration
+- Sections: dashboard, analytics, orders, refunds, drivers, stores, products, specials, areas, storeNotifications, notifications, settings, testmode
+- Not feature-complete yet
+
+**Do NOT delete `admin.js` until the new modular admin covers everything it does.** The migration plan is: for each function in the old file, find/port the equivalent into the new files, then retire the old file once nothing is missing.
+
+---
+
+## 11. PWA structure
+
+### `manifest.json`
+Standard PWA manifest. Icons at `img/icon-192.png` and `img/icon-512.png`.
+
+### `sw.js` (main)
+- Cache version: `ghost-shopper-v2`
+- Precaches shell assets + `offline.html` + `404.html`
+- Fetch strategy:
+  - **Navigations** → network first, fall back to `offline.html`
+  - **Everything else** → cache first, then network
+
+### `firebase-messaging-sw.js` (FCM)
+- Handles push notifications
+- Uses the VAPID key hardcoded in `global.js`
+
+### Registration
+`registerServiceWorker()` in `global.js`. In dev (`localhost` / `127.0.0.1`) scope is `/public/`. In prod it's `/`.
+
+**Important:** Service workers require HTTPS or `localhost`. They do **not** work from `file://`.
+
+---
+
+## 12. Analytics
+
+`analytics.js` tracks:
+- `analytics_product_views`
+- `analytics_store_views`
+- `analytics_flyer_views`
+- `analytics_special_views`
+- `analytics_sessions` (used for "online now" count)
+- `abandoned_carts`
+- `analytics_installs` (PWA installs)
+
+Admin analytics panel reads all of these.
+
+---
+
+## 13. Local development
+
+### Prerequisites
+- Node.js (for Firebase CLI)
+- Firebase CLI: `npm install -g firebase-tools`
+- VSCode with Live Server extension (or `firebase serve`)
+
+### Running locally
+
+**Option A — Live Server (fastest):**
+1. Open `public/index.html` in VSCode
+2. Right-click → Open with Live Server
+3. Page loads at `http://127.0.0.1:5500/public/index.html`
+
+**Option B — Firebase emulators:**
+```
+firebase emulators:start
+```
+Brings up Auth (9099), Functions (5001), Hosting (5000), Firestore (8080), Storage (9199), UI (4000).
+
+**Option C — Firebase serve:**
+```
+firebase serve --only hosting
+```
+
+### Important local dev notes
+
+- **All hrefs must use `.html` extension.** `/cart` won't work on Live Server. `cart.html` works everywhere (Firebase strips the `.html` via `cleanUrls: true` on prod).
+- **Service workers only work on `http://localhost` / `http://127.0.0.1`** — never on `file://`.
+- **Firebase Auth reCAPTCHA:** if it times out during local testing, close the modal and reopen. Long-idle modals will fail.
+- **Google Maps API:** the key is restricted to specific HTTP referrers in Google Cloud Console. If you're testing from a new domain, you'll need to add it there.
+
+### Testing offline
+
+1. Load the site once online to let the SW install
+2. DevTools → Application → Service Workers → verify it's registered
+3. DevTools → Application → Cache Storage → verify `ghost-shopper-v2` has `offline.html` in it
+4. DevTools → Network → Offline
+5. Click a link or navigate — you should see `offline.html`
+
+If you get the browser's default "page can't be reached" instead, the SW isn't intercepting. Check the console for SW errors.
+
+---
+
+## 14. Deployment
+
+```
+firebase deploy                      # deploy everything
+firebase deploy --only hosting       # hosting only
+firebase deploy --only functions     # functions only
+```
+
+### `firebase.json` highlights
+
+- `public: "public"` — hosting serves from `public/`
+- `cleanUrls: true` — `/cart` serves `cart.html`
+- CSP header set on `**` (content security policy — see Known Issues for tightening plan)
+- Emulator ports: auth 9099, functions 5001, hosting 5000, storage 9199, ui 4000, firestore 8080
+- `singleProjectMode: true`
+
+### Firebase project
+
+`ghostshopza` (see `.firebaserc`).
+
+---
+
+## 15. Recent work (Sept 2026)
+
+The following was done in September 2026 and should be treated as the current state:
+
+### Homepage rebuild (complete)
+
+See section 1 for the full list.
+
+### `global.js` fixes (complete)
+
+- Auth modal is now phone-only with fixed `+27` prefix and 9-digit input
+- `initAuthModal` no longer pre-fills the phone field
+- `verifyBtn` success branch no longer references a non-existent `name` variable
+- `closeLegalModal` added (was missing)
+- `initLegalModals` added (was missing)
+- Legal modals now stack **above** the auth modal (z-index 4500)
+- Navigation paths in bottom nav now use `.html` (e.g. `cart.html`, `stores.html`, `my-orders.html`, `account.html`)
+
+### `sw.js` (complete)
+
+- Cache version bumped to `ghost-shopper-v2`
+- Added offline fallback for navigations
+- Added `404.html` and `offline.html` to precache list
+
+### Store open/closed logic (complete, in `index.js`)
+
+- `isStoreOpenNow(store)` parses `store.hours` and checks against current day/time
+- Returns false if `temporarilyClosed: true`
+- Homepage `renderStores` uses this to compute the Open/Closed badge
+
+### Partner with Us modal (complete)
+
+- Footer link now opens a modal with Email / WhatsApp options
+- Pre-filled template message for both channels
+
+### New legal modal HTML (complete)
+
+- `public/modals/terms.html`, `privacy.html`, `cookies.html` all rewritten with sticky headers
+
+### New pages (complete)
+
+- `public/404.html`
+- `public/offline.html`
+
+---
+
+## 16. Known issues & pending work
+
+### High priority
+
+1. **Yoco secret keys are hardcoded** in `functions/index.js`. They need to move to Firebase Secret Manager (`firebase functions:secrets:set YOCO_TEST_SECRET_KEY` and `YOCO_LIVE_SECRET_KEY`) and be read via `defineSecret()`. **The current keys should be rotated** because they've been in source control.
+
+2. **Firestore security rules not reviewed.** Given the app trusts client-side data heavily, rules need to be audited. Check that:
+   - Customers can only read/write their own user doc and orders
+   - Only admins can write to `settings/*`, `stores/*`, `products/*`, `specials/*`, `areas/*`
+   - Only Cloud Functions (Admin SDK) can write to `analytics_installs`, `driverPayments`, `creditNotes`
+
+3. **Special ↔ product linking.** Specials don't have a `productId`. The homepage matches by name to find alternatives, which is fragile. Should add `productId` to `specials` when the admin creates them.
+
+4. **Admin migration incomplete.** The new modular admin in `public/admin/js/` doesn't yet cover everything in `admin.js` (root). Needs an audit and port.
+
+### Medium priority
+
+5. **Checkout page not restyled** with the new `base.css` components. Still uses its own CSS.
+
+6. **Cart page not restyled.** Same.
+
+7. **Stores / store pages not restyled.** Same.
+
+8. **Customer account page not restyled.** Same.
+
+9. **`base.css` isn't loaded on other pages yet.** Only `index.html` uses it. Other pages will need `<link rel="stylesheet" href="css/base.css">` added when they're migrated.
+
+10. **CSP has `'unsafe-inline'`** on `script-src`. Tightening this requires moving all inline `<style>` and inline `onclick=` handlers into real files.
+
+11. **Google Maps key in `env.js`** — should be restricted in Google Cloud Console to the exact referrers (`ghostshopza.web.app/*`, `ghostshopza.firebaseapp.com/*`, plus `127.0.0.1:5500` and `localhost:5500` for dev).
+
+12. **`admin.js` at root** is 140 KB and outside `public/`. Should be moved into `public/admin/js/` or confirmed dead. Currently it's used by `public/admin/admin.html`? — needs verification.
+
+### Lower priority
+
+13. **Image optimization pending.** Hero image (`hero-delivery.png`) and logo (`ghost-shopper-logo.png`) are still large. WebP versions planned but not generated.
+
+14. **`analytics.js` loaded on all pages** — could be lazy.
+
+15. **Service worker `scope: '/public/'` in dev** — if navigations happen outside `/public/`, the SW won't intercept. Acceptable for now.
+
+16. **No error/empty states on some pages.** Homepage has them; others don't.
+
+17. **Duplicate `window.*` overrides.** `checkout.js` currently has `window.openAuthModal = function() {};` which silently overrides the real one from `global.js` on the checkout page. Should be removed.
+
+18. **`analytics_installs` tracking** — install count is tracked but no easy way to filter by environment.
+
+---
+
+## 17. Testing checklist (per page)
+
+When editing any page, verify:
+
+- [ ] Page loads without console errors
+- [ ] Firebase Auth still works (open the auth modal, it should appear)
+- [ ] Cart badge shows correct count
+- [ ] Bottom nav (mobile) and top nav (desktop) both navigate correctly with `.html` extensions
+- [ ] Cookie banner appears on first visit, dismisses correctly
+- [ ] Legal modals open and stack correctly
+- [ ] Toasts appear with correct message
+- [ ] No horizontal scroll at 360px, 375px, 390px, 412px, 1280px, 1440px, 1920px
+- [ ] Bottom nav doesn't cover footer content on mobile
+- [ ] Address autocomplete works (type 3+ chars)
+
+---
+
+## 18. Style guide (for consistency)
+
+### Colors (CSS variables in `base.css`)
+
+```css
+--navy: #1B2B6B;
+--navy-deep: #030E38;
+--orange: #F97316;
+--orange-dark: #ea580c;
+--orange-soft: #FFF7ED;
+--green: #16a34a;
+--red: #dc2626;
+--blue: #3B82F6;
+--blue-d: #2563EB;
+--bg: #F9FAFB;
+--surface: #ffffff;
+--border: #e5e7eb;
+--text: #111827;
+--text-secondary: #6b7280;
+--text-muted: #9ca3af;
+```
+
+### Buttons
+- `.btn-primary` — orange filled
+- `.btn-secondary` — white with border
+- Both use `border-radius: var(--radius-full)` (pill)
+
+### Border radius
+- `--radius-sm: 8px`
+- `--radius-md: 12px`
+- `--radius-lg: 16px`
+- `--radius-xl: 24px`
+- `--radius-full: 9999px`
+
+### Icons
+Font Awesome. Use `aria-hidden="true"` on decorative icons.
+
+### Typography
+Inter, weights 400 / 500 / 600 / 700 / 800. Headings use 700–800. Body uses 400–500.
+
+---
+
+## 19. Contact
+
+- **Owner:** Mary S
+- **WhatsApp:** +27 62 898 9813
+- **Email:** wedeliverzn@gmail.com
+- **Facebook:** https://web.facebook.com/profile.php?id=61589902767644
+
+---
+
+## 20. How to work on this with an AI assistant
+
+If you're an AI assistant reading this to help the owner:
+
+1. **Read this README fully first.** Section 0 tells you the DO NOT CHANGE rules. Section 16 tells you what's broken.
+2. **Ask before making architectural changes.** The owner values stability over speed.
+3. **Always send full files, not fragments**, when the file is under ~600 lines. Fragments confuse the owner because they have to manually merge them.
+4. **When changing `global.js` or `base.css`, warn the owner** — those are shared across many pages and a mistake can break every page.
+5. **Never use `file://`** when testing. Live Server or Firebase serve only.
+6. **Never invent Firestore fields.** Check the data model in section 4 first.
+7. **Confirm the store hours format** (`"Mon-Fri 7:30am-6pm, Sat 7am-6pm, Sun 7:30am-5pm"`) before writing parsers.
+8. **Local dev requires `.html` extensions** in hrefs. Firebase strips them on prod.
+9. **When in doubt, ask.** The owner has been burned by AI assistants changing things they didn't ask for.
+```
+21. Update — 17 September 2026 (session handover)
+Note to the next AI reading this: Read section 0 (DO NOT CHANGE) first. This addendum tells you what changed today and where the current work is paused. The owner is about to send you store.html, store.js, and store.css as the current files.
+
+What was completed today
+Specials filter fix — homepage (index.js)
+
+loadSpecials() now filters out specials whose endDate is in the past, in addition to the active !== false check.
+
+Fixes a bug where an August 31 special was still showing on 17 September because the fallback query path fetches without the active filter.
+
+Same fix was applied earlier to stores.js.
+
+Result: outdated specials no longer render on the homepage.
+
+Stores page (stores.html + stores.js + stores.css) — mall-directory layout
+
+Hero strip (navy gradient) at the top with eyebrow, headline, sub.
+
+Categories rail (horizontal scroll on mobile, wrap on desktop).
+
+Weekly Specials rail with the same .special-card used on the homepage.
+
+"New on Ghost Shopper" rail showing the newest stores by createdAt (up to 5, most recent first).
+
+Search section: single search input with Stores / Items mode toggle.
+
+Store cards use the shared horizontal card (logo left, name/desc/badge on the right) — identical to the homepage.
+
+Item result cards show a floating + button on the image (same as special cards), not a full-width "Add to Cart" button.
+
+Store cards, item cards, and special cards all open the shared product modal (product-modal.js).
+
+Cart modal wired (markup in stores.html, logic in global.js).
+
+Cart modal (global.js + base.css) — shared component
+
+Bottom-sheet style modal with:
+
+Header (title + item count + close X)
+
+Store badge (shows the store name when cart has items)
+
+Item rows with quantity controls and remove button
+
+Search-to-add field (searches only within the store already in the cart)
+
+Subtotal + two CTAs: "Go to Cart" (cart.html) and "Checkout" (checkout.html)
+
+Empty state: "Your cart is empty" + "Start Shopping" button.
+
+Activated on any page that has <div id="cartModal"> in its HTML.
+
+Currently wired on: stores.html, store.html, index.html.
+
+Homepage cart icon rollout (index.html)
+
+Cart modal markup added to index.html.
+
+Cart icon now opens the modal instead of showing the old "cart is empty" toast.
+
+Fallback behaviour preserved: if #cartModal is missing, the icon still navigates to cart.html.
+
+Product modal extracted to shared module (public/js/product-modal.js)
+
+Was previously duplicated inside index.js and separately inside store.js.
+
+Now a single module used by index.js, stores.js, and store.js.
+
+Exports: openProductModal(item), closeProductModal(), setProductModalData({ stores, products }), getProductModalState().
+
+Accepts both "special" shape (item, store) and "product" shape (name, storeName) — normalises internally.
+
+What was completed today — store.html (the storefront)
+Aisle layout (Delivery B) — just applied, needs testing
+
+Products grouped by category, one aisle section per category.
+
+Each aisle is a horizontal row of product cards — up to 10 per row.
+
+If a category has more than 10 items, a "Show More" tile appears at the end of the row.
+
+Click "Show More" → that category expands to show all its items, all other categories hide. A "Show Less" button appears at the bottom of the expanded aisle.
+
+Click "Show Less" → back to normal view (all aisles, 10 each).
+
+Cross-jump behaviour: user must click "Show Less" before expanding another category — no direct jump between expanded categories.
+
+store.js now imports from product-modal.js — the old local modal code was removed.
+
+Cart modal markup added to store.html.
+
+Old .product-modal and .special-modal container markup removed (shared modal handles these).
+
+New CSS in store.css:
+
+.aisle-section, .aisle-head, .aisle-title, .aisle-count
+
+.aisle-scroll-wrapper, .aisle-scroll
+
+.aisle-card, .aisle-card-img-wrap, .aisle-card-img, .aisle-card-add-btn, .aisle-card-out
+
+.aisle-card-body, .aisle-card-name, .aisle-card-weight, .aisle-card-prices
+
+.aisle-see-more-tile, .aisle-see-more-icon, .aisle-see-more-label, .aisle-see-more-sub
+
+.aisle-expanded-footer, .aisle-show-less-btn
+
+Kept: store header, flyer viewer, flyer gallery, store specials rail, contact details, nav product search
+
+Current state — testing needed
+The store page aisle layout was just delivered but not yet tested by the owner. The next AI should:
+
+Ask the owner to open store.html?name=<store name> on Live Server
+
+Confirm the aisles render correctly
+
+Confirm "Show More" / "Show Less" work
+
+Confirm product cards open the shared modal with alternatives + add-to-cart
+
+Confirm cart modal works (icon → modal, search-to-add within store, remove, quantity)
+
+If anything is broken, fix in the smallest possible patch
+
+What is still pending (Delivery C and D)
+Delivery C — Store page hero/branding + image lightbox (not started)
+
+Redesign the store page header into a branded "store page" feel — navy hero with logo, name, contact info (clickable address → Google Maps, clickable phone → tel:), hours, delivery fee, rating.
+
+Add an image lightbox on product images: click image in product modal → full-size uncropped image in an overlay. Click anywhere → close → back to the product modal.
+
+The owner confirmed: (b) navy gradient hero matching the rest of the site (not Facebook-cover style).
+
+Delivery D — Fine styling polish (later)
+
+The owner explicitly wants to defer micro-styling until after C.
+
+Included in "later": cart modal tooltip on item click (owner said "leave that data for now"), "New on Ghost Shopper" card visual improvements (needs admin fields added), and small layout refinements.
+
+Known issues spotted today
+Analytics module lazy-import in store.js
+
+store.js uses await import('./analytics.js') at top level of a module. This works but means the module must resolve before the rest of store.js runs. Currently wrapped in try/catch. If analytics.js errors, the page still works. Keep this pattern.
+
+Firestore composite index — announcements
+
+The query where('active', '==', true) + orderBy('startDate', 'desc') requires a composite index. The owner was given the Firebase Console link to create it. Verify this index exists before assuming the announcement modal works.
+
+Firestore composite index — specials
+
+The query where('active', '!=', false) + orderBy('active') + orderBy('createdAt', 'desc') may also require a composite index. If it's missing, the query falls back to a query without the active filter — this is why the endDate filter fix was needed. Recommend the owner create the index in the console.
+
+Google Maps API — legacy AutocompleteService warning
+
+Console shows a deprecation warning: google.maps.places.AutocompleteService is not available to new customers.... It still works but Google recommends migrating to AutocompleteSuggestion. Not urgent, but on the list.
+
+Updated DO NOT CHANGE (additions)
+Add these to the DO NOT CHANGE list in section 0:
+
+Do NOT revert the shared product modal extraction. product-modal.js is now used by index.js, stores.js, and store.js. Reverting to per-page modals will re-break the homepage and stores page.
+
+Do NOT remove the endDate filter from loadSpecials in index.js or stores.js. It's what stops expired specials from showing.
+
+Do NOT remove the #cartModal markup from any page where it exists. It's the trigger for the cart-modal-vs-navigate behaviour in global.js.
+
+Files changed today (for the next AI)
+Touched today:
+
+public/index.html — cart modal markup added
+
+public/js/index.js — endDate filter in loadSpecials; product modal now imported from product-modal.js
+
+public/stores.html — rebuilt (mall-directory layout)
+
+public/js/stores.js — rebuilt (rails + shared modal + cart modal)
+
+public/css/stores.css — rebuilt
+
+public/store.html — rebuilt (aisle layout + cart modal + shared modal)
+
+public/js/store.js — rebuilt (aisle layout + shared modal import)
+
+public/css/store.css — rebuilt (aisle styles)
+
+public/js/product-modal.js — new file (shared product modal)
+
+public/css/base.css — store card styles, product modal styles, cart modal styles, defensive .product-modal { z-index: 2147483647 !important }
+
+public/js/global.js — cart modal logic, cart modal listeners, cart icon wiring, parameter name fix in performCartSearch (renamed query to searchTerm)
+
+Backups: The owner has .bak copies of most files from before today's changes. If anything is fundamentally broken, they can revert. Ask before reverting — some fixes (like the specials filter) are genuinely needed.
+
+What to do next in the new chat
+Read the full README, especially section 0 (DO NOT CHANGE).
+
+Ask the owner to send store.html, store.js, and store.css — the current versions.
+
+Ask what specifically is broken or missing on store.html right now.
+
+Test the aisle layout with the owner if not already tested.
+
+Then proceed to Delivery C (hero/branding + image lightbox) with the confirmations already made:
+
+Hero: navy gradient matching the site
+
+Image lightbox: click image in product modal → full-size overlay → click anywhere to close
+
+Do not bundle C and D. Test C before starting D.
+
+If at any point the owner says "revert", confirm exactly which file(s) — do not revert all of them.
+
+Final note to the next AI
+The owner (Mary) works via chat with AI assistants and has been burned repeatedly by bundled changes breaking things. The rules that have worked well today:
+
+One delivery at a time. Test between each.
+
+Full file replacements, not fragments, for files under ~600 lines.
+
+Explain what you changed before you send the code, not after.
+
+When something breaks, ask for the console output before guessing.
+
+Never assume a previous conversation's context carries over — the README is the source of truth.
+
+When the owner says "just do it", still warn about the risk first — they appreciate honesty.
+
+Today's session was productive because we stuck to those rules. Keep doing it.
+
+End of addendum — 17 September 2026
+
+The function tries to verify the auth token and fails, then falls through
+to a fallback path. This is a **security gap** — the function can't prove
+the request came from a signed-in user. Should be fixed as part of the
+Yoco migration (E.3). Likely a wrong import of the Admin SDK.
+
+3. **`admin.auth is not a function`** — flag for the next delivery.
+
+4. **Firestore rules not yet reviewed.** Still §16 issue #2.
+
+5. **Google Cloud Console key restrictions not yet applied.** Still §16 issue #11.
+The Firebase web key and the Google Maps key both need HTTP referrer
+restrictions. Owner has not done this yet.
+
+### 22.4 What's NOT yet done (finish before deploying)
+
+The owner wants to finish all remaining pages before deploying the new
+layout. Pages still using the OLD layout:
+
+- `public/order-confirmation.html` + `.css` + `.js` — **next priority**
+(customers land here right after payment)
+- `public/my-orders.html` + `.css` + `.js`
+- `public/account.html` + `.css` + `.js`
+- `public/login.html` + `.css` + `.js` (may be unused — check)
+- `public/notifications.html` + `.css` + `.js`
+- `public/stores.html` + `stores.js` + `stores.css` — **verify** it's on
+the new base tokens (rebuilt 17 Sept, may still have legacy styling)
+- `public/index.html` — the homepage hero uses `index.css`, which was NOT
+rebuilt this session. The homepage is functional but styling is from the
+earlier session. Needs a visual consistency pass.
+- `public/store-accept.html`, `driver-*.html`, `admin/` — internal pages,
+not customer-facing. Lower priority.
+
+### 22.5 Files changed 17–22 Sept 2026 (for the next AI)
+
+**Rebuilt / heavily modified:**
+- `public/store.html`, `public/js/store.js`, `public/css/store.css`
+- `public/cart.html`, `public/js/cart.js`, `public/css/cart.css`
+- `public/checkout.html`, `public/js/checkout.js`, `public/css/checkout.css`
+- `public/js/product-modal.js`
+
+**Patched:**
+- `public/css/base.css` — cart modal store-name fix, alt tile sizing
+- `public/js/global.js` — cart modal logic (from 17 Sept session)
+
+**Untouched (still source of truth):**
+- `public/js/firebase-config.js`, `public/js/cart-utils.js`
+- `public/config/env.js`
+- `functions/index.js` — **needs the Yoco secret migration**
+- `public/js/index.js` — homepage logic (still fine)
+- `public/js/stores.js` — stores logic (still fine)
+- `admin.js` (root) and `public/admin/**` — legacy admin unchanged
+
+### 22.6 Next chat priorities (in order)
+
+1. **Finish the remaining pages** so the whole site is visually consistent.
+Owner's order of importance (recommend confirming):
+- order-confirmation → my-orders → account → notifications
+2. **Then do the security work (E.3):**
+- Yoco secret migration to Firebase Secret Manager
+- Fix `admin.auth is not a function` in `functions/index.js`
+- Remove the console.log that prints the key
+- Redeploy functions
+- **Owner rotates the Yoco keys** in the Yoco dashboard
+3. **Then apply Google Cloud Console restrictions:**
+- Firebase web API key → HTTP referrer restricted
+- Google Maps key → HTTP referrer + API restricted (Maps JS + Places)
+4. **Then review Firestore security rules.**
+
+### 22.7 Working style that has been successful
+
+The owner (Mary) works via chat with AI assistants. The rules that worked
+across both sessions:
+
+- **One delivery at a time.** Small, testable, revertible.
+- **Look before writing.** Read the current files before proposing changes.
+- **Full replacements** for files under ~600 lines. Fragments confuse the
+owner.
+- **Explain before sending code** — short summary of what changes and why.
+- **When something breaks, ask for the console output** before guessing.
+- **Warn before touching shared files** (`base.css`, `global.js`,
+`product-modal.js`) — they affect every page.
+- **Never assume the previous chat's context carries over.** The README
+(including this addendum) is the source of truth.
+- **When the owner says "just do it", still warn about risk first.**
+- **Ask before reverting.** Confirm exactly which file(s).
+
+### 22.8 Known cosmetic issues (acknowledged, deferred)
+
+- Some product images in the modal hero are still too large for their
+container on certain aspect ratios. Owner said "leave it for now".
+- The sibling-tile tooltip on the cart alt modal was requested; implemented
+and working.
+- The homepage hero and logo images are still large (image optimisation
+is §16 issue #13, still pending).
+- Legacy inline styles remain in some driver/admin pages — not customer-facing,
+not touched this session.
+
+### 22.9 Deployments
+
+**The new layout has NOT been deployed.** Local testing is on Live Server
+at `127.0.0.1:5500/public/`. Do not deploy until the owner confirms all
+customer-facing pages are complete and tested together.
+
+When ready: firebase deploy --only hosting # frontend only
+firebase deploy --only functions # after the E.3 fix, when ready
+
+
+End of addendum — 22 September 2026
+
+---
+
+## 23. Update — 22 September 2026 (session handover #3)
+
+**Read §0 (DO NOT CHANGE) first.** Then §21 (17 Sept) and §22 (earlier 22 Sept).
+This section captures everything done AFTER §22 was written. The site is now
+visually consistent across customer-facing pages, but **still NOT deployed**.
+Owner is holding the deployment until the remaining pages are done.
+
+### 23.1 What was done in this session (continuation of 22 Sept)
+
+**Account page — complete rebuild**
+- `public/account.html` — rebuilt clean:
+  - Standard navbar, bottom nav, auth modal (phone-only, `+27` prefix)
+  - Navy gradient hero ("Welcome back" / account description)
+  - Profile card, notifications toggle, saved addresses (with label chips
+    Home/Work/Other), danger zone (delete/sign out)
+  - Edit Profile modal, Address modal, Wallet modal, Refund modal,
+    Delete Account modal — all use shared `.gs-modal` classes
+  - Google Maps key loaded dynamically from `window.__ENV.GOOGLE_MAPS_API_KEY`
+  - No inline junk CSS beyond the loader
+- `public/js/account.js` — rebuilt:
+  - Kept all logic: load user, edit profile, phone change with OTP,
+    address CRUD with `label` field, wallet, refund, delete account
+  - Profile picture upload with **client-side compression** — max dimension
+    400px, JPEG quality 0.8 (retry 0.6 if still too big), capped at 200 KB
+  - Address labels: `label: "home" | "work" | "other"`, multiples allowed
+  - **Phone change flow**: verify OTP on new number → save to Firestore →
+    **sign the user out** with message "Phone number updated. Signing you out..."
+    (Authentication identity still tied to the old phone — the proper fix
+    requires an Admin SDK Cloud Function, deferred to later)
+  - Delete Account: **soft delete Firestore only** — user doc wiped, storage
+    profile pic removed, `deleted: true` flag. Auth record stays. User can
+    sign up again with same phone.
+  - Phone input uses `+27` prefix pill (matches auth modal)
+  - Removed the duplicated cookie/nav/cart logic (global.js handles it)
+- `public/css/account.css` — rebuilt with base tokens.
+
+**Phone formatting rules (global)**
+- Display everywhere: `+27 824 294 356` (SA standard 3-3-4 groups)
+- Input: 9 local digits only, `+27` is a fixed prefix pill
+- Helpers `formatPhoneForDisplay` and `phoneToLocalDigits` live in `global.js`,
+  exposed as `window.gsFormatPhone` and `window.gsPhoneToLocal`
+
+**Notifications modal — full restyle + detail view**
+- `public/js/notifications.js` — full replacement:
+  - **CSS is injected by the module on first open** — no `<link>` needed
+    on any page. This fixes a bug where the modal appeared unstyled because
+    `notifications.css` wasn't loaded anywhere (the old `notifications.html`
+    was orphaned).
+  - Query changed to `orderBy('sentAt', 'desc')` — **matches what admin
+    actually writes**. Previously queried `createdAt`, which is why
+    notifications never appeared.
+  - Item click opens a **detail card** inside the same modal — larger
+    image, full title, full message, timestamp. "All notifications" button
+    returns to the list. Escape from detail → list. Escape from list →
+    close.
+  - Item is a proper `<button>` now (keyboard accessible).
+  - Delete button is a nested `<span role="button">` inside the item
+    (nested buttons aren't valid HTML).
+  - `markAllRead` uses the cached array, not a DOM query — more robust.
+  - Fallback "Track your order" CTA (`my-orders.html`) appears in the
+    empty state and error state.
+  - Same Firestore filter logic as before (recipientIds/recipients empty →
+    all users, deletedFor, readBy).
+
+**`.gs-modal*` moved to `base.css`**
+- The shared modal chrome (`.gs-modal`, `.gs-modal-backdrop`, `.gs-modal-panel`,
+  `.gs-modal-header`, `.gs-modal-title`, `.gs-modal-close`, `.gs-modal-body`,
+  `.gs-modal-footer`, `.gs-modal-header-actions`) now lives in `base.css`.
+- **Removed the duplicate block from `account.css`** — it was only defined
+  there, so any page without `account.css` loaded had an unstyled modal.
+- Now every page that includes `base.css` gets the modal language for free.
+
+**`global.js` — two small patches**
+- `initDesktopNav()` now wires `#desktopNotifyBtn` — the **desktop bell**
+  on every page. Previously only `desktopCartBtn` and `authBtn` were wired,
+  so the desktop bell did nothing on any page.
+- `initAddressSearch()` now silently skips when `#addressSearchInput` is
+  missing (silences the noisy "Address input not found" warning on
+  account.html and any page without an address search).
+
+### 23.2 DO NOT CHANGE (additions to §0)
+
+Add these to the DO NOT CHANGE list:
+
+14. **Do NOT remove the CSS injection from `notifications.js`.** The
+    notification modal relies on the module injecting its own styles. If
+    you remove that and forget to add a `<link>` to every page, the modal
+    reverts to unstyled.
+15. **Do NOT change `orderBy('sentAt', 'desc')` to `createdAt`** in
+    `notifications.js` unless the admin is also changed. The admin writes
+    `sentAt`.
+16. **Do NOT remove the `+27` prefix pill pattern** from the phone inputs
+    (auth modal + account edit profile). Users enter 9 digits only —
+    the country code is fixed.
+17. **Do NOT remove the profile picture compression** from `account.js`.
+    Max 400px dimension, capped at 200 KB. Prevents users uploading 3MB
+    phone camera pics to Firebase Storage.
+18. **Do NOT hard-remove `.gs-modal*` from `base.css`.** It's shared by
+    notifications, account, and any future modal. Moving it back to a
+    page-specific file will re-break styling on pages without that file.
+
+### 23.3 Notification data contract (IMPORTANT — confirmed this session)
+
+Your admin writes notification docs with these exact field names:
+
+```js
+notifications/{id} {
+  title:          string,
+  message:        string,
+  imageUrl:       string,        // optional, '' when absent
+  icon:           string,        // e.g. 'fa-bell'
+  recipientIds:   [string],      // array of user UIDs (empty = all)
+  recipientNames: [string],      // for admin display
+  recipients:     [string],      // same as recipientIds
+  readBy:         [string],      // UIDs who've read
+  deletedFor:     [string],      // UIDs who've deleted
+  sentAt:         Timestamp,     // ← the customer modal queries by THIS
+  sentBy:         string,        // admin UID or 'admin'
+  recipientCount: number         // sent count, updated after push
+}
+
+The customer modal (in notifications.js) filters docs where:
+
+recipientIds.length === 0 && recipients.length === 0 → broadcast to all
+
+OR recipientIds.includes(user.uid) → targeted
+
+OR recipients.includes(user.uid) → targeted (older docs)
+
+And it hides docs where deletedFor.includes(user.uid).
+
+23.4 Files changed this session (post-§22)
+Rebuilt / heavily modified:
+
+public/account.html, public/js/account.js, public/css/account.css
+
+public/js/notifications.js — full replacement with CSS injection +
+detail view + sentAt query fix
+
+Patched:
+
+public/js/global.js — desktop bell wiring + silent address-search skip
+
+phone helpers (window.gsFormatPhone, window.gsPhoneToLocal)
+
+escapeHtml helper added
+
+Touched (moved styles):
+
+public/css/base.css — .gs-modal* block appended
+
+public/css/account.css — duplicate .gs-modal* block removed
+
+Not touched:
+
+public/css/notifications.css — now orphaned (only the orphaned
+notifications.html loads it). Left in place for that page.
+
+23.5 Still open / what's next
+Priorities in order:
+
+Finish the remaining pages so the whole site is consistent:
+
+public/order-confirmation.html + .css + .js — next (customers
+land here right after Yoco payment)
+
+public/my-orders.html + .css + .js
+
+public/login.html + .css + .js (may be orphaned — check)
+
+public/notifications.html (orphaned — safe to delete later)
+
+public/stores.html + stores.js + stores.css — verify base-token
+consistency
+
+public/index.html + index.css — the homepage hero styling predates
+the current session, needs a visual pass for consistency
+
+store-accept.html, driver-*.html, admin/ — internal pages,
+lower priority
+
+Security work — E.3 (Yoco migration):
+
+Move YOCO_TEST_SECRET_KEY and YOCO_LIVE_SECRET_KEY from
+functions/index.js to Firebase Secret Manager
+
+Update the function to use defineSecret()
+
+Remove the console.log('🔑 Using LIVE key: sk_live_ff...') line
+— the log shows the live key on every call
+
+Fix admin.auth is not a function in functions/index.js
+
+Redeploy functions
+
+Rotate the Yoco keys in the Yoco dashboard (assume leaked)
+
+See §22.3 for full details
+
+Google Cloud Console restrictions:
+
+Firebase web API key → HTTP referrer restricted
+
+Google Maps key → HTTP referrer + API restriction (Maps JS + Places)
+
+Owner hasn't done this yet
+
+Firestore security rules review.
+
+23.6 Known caveats / deferred
+Phone change authentication limitation: when a user changes their
+phone number, Firestore's phone field updates, but their Firebase Auth
+identity is still bound to the old phone. Signing in with the new number
+creates a new UID. Proper fix requires an Admin SDK Cloud Function
+(admin.auth().updateUser(uid, { phoneNumber })) — deferred to after
+the Yoco migration.
+
+Standalone notifications.html is orphaned — no page links to it.
+Leave it for now.
+
+notifications.css is now unused by live pages — the modal injects
+its own styles. Leaving the file in place for the orphaned page.
+
+The homepage hero predates this session's design work — visual pass
+pending.
+
+Image optimisation still pending — hero and logo are large.
+
+admin.auth is not a function — still present, blocks proper auth
+token verification on the payment function. Security gap. Fix in E.3.
+
+23.7 Tested and confirmed working
+✅ Yoco payment end-to-end (tested 22 Sept, log showed successful
+createYocoCheckout → redirectUrl → session created)
+
+✅ Notifications now show in the customer modal (after the sentAt fix)
+
+✅ Notifications modal opens from the bell on every page
+
+✅ Notification detail view — click an item → see full content → back
+
+✅ Mark all read, delete notification, empty state
+
+✅ Account page: profile, edit, addresses with labels, wallet, refund,
+delete account (soft)
+
+✅ Profile picture upload with compression
+
+✅ Address labels appear on checkout's saved-address chips
+
+✅ Area matching on checkout (Verulam → R35, Hazelmere → R38, others
+show WhatsApp request card)
+
+✅ Cart page (packaging fee, alternate modal, tooltips, side-by-side
+Empty/Checkout buttons)
+
+✅ Store page (flat price-sorted grid, product modal with sibling rail,
+flyers, image lightbox)
+
+23.8 Deployments
+The new layout has NOT been deployed. Local testing is on Live Server
+at 127.0.0.1:5500/public/. Do not deploy until the owner confirms all
+customer-facing pages are complete and tested together.
+
+When ready:
+
+text
+firebase deploy --only hosting    # frontend only
+firebase deploy --only functions  # after E.3 fix, when ready
+End of addendum — 22 September 2026 (session #3)
+
+text
+
+---
+
+## What this addendum captures
+
+1. **The `.gs-modal` move to `base.css`** — future AI won't try to define it again in account.css.
+2. **The notifications CSS injection** — critical to not break.
+3. **The `sentAt` vs `createdAt` field name** — the bug we just found.
+4. **The phone change limitation** — documented so it's not a surprise.
+5. **Profile picture compression rules** — 400px, 200 KB cap.
+6. **Address labels** — `home`/`work`/`other`, multiples allowed.
+7. **Desktop bell fix in `global.js`** — won't be re-broken.
+8. **What's tested and working** — so the next AI has a baseline.
+9. **What's still pending** — order-confirmation → my-orders → homepage → E.3 security.
+
+---
+
+## After you save this
+
+Save `README.md` with §23 appended. Then when you start the next chat:
+
+1. Paste the full README (§0 + §21 + §22 + §23)
+2. Say "next is order-confirmation.html/css/js"
+3. Send those files
+
+The next AI will know exactly where we are, what the DO NOT CHANGE rules are, and what's next.
+
+**Ready when you are for `order-confirmation`.**
+
+---
+
+## 24. Update — 24 September 2026 (session handover #4)
+
+**Read §0 (DO NOT CHANGE) first.** Then §21, §22, §23. This section captures
+everything done AFTER §23 was written. The site is not yet deployed with all
+of this. Owner is preparing for a fresh deploy.
+
+### 24.1 What was done in this session
+
+**CSP (Content Security Policy) — final fixes**
+- `firebase.json` CSP header expanded to allow the domains the app actually uses:
+  - `https://www.gstatic.com` (Firebase JS SDK)
+  - `https://apis.google.com` (Firebase Auth helper)
+  - `https://www.google.com` (reCAPTCHA for phone sign-in)
+  - `https://cdnjs.cloudflare.com` (Font Awesome CSS + fonts + SW fetch)
+  - `https://*.cloudfunctions.net`, `https://*.run.app` (Cloud Functions calls)
+  - `https://*.yoco.com` (Yoco checkout iframe)
+- The CSP is now quite permissive (`'unsafe-inline'` on script-src and
+  style-src, wildcard domains). Tightening is §16 issue #10 — future work.
+
+**Service worker (`public/sw.js`) — rewritten**
+- **Old SW was the cause of the store page hanging.** It intercepted every
+  request (including external requests to Firebase, Google, cdnjs, Yoco) and
+  cached them. When CSP blocked those external fetches, the SW returned fake
+  `503 Offline` responses, which caused images to fall back to `placeholder.jpg`
+  and broke the PWA install prompt.
+- New SW policy:
+  - Precaches only shell assets (HTML, base CSS, key JS, logo, manifest)
+  - Network-first for HTML navigations
+  - Cache-first only for **own-origin** static assets (`css/`, `js/`, `img/`,
+    `config/`, `modals/`, `fonts/`)
+  - **Pass-through for everything else** — the SW refuses to touch any
+    request whose origin doesn't match `self.location.origin`
+  - Cache name bumped to `ghost-shopper-v3` (forces purge of old caches)
+  - Kill-switch message handler responds to `UNREGISTER` and `CLEAR_CACHES`
+
+**Store page performance — root cause found and fixed**
+- Owner reported store page hanging on first load. PWA install worked (cached)
+  but fresh visits hung forever. Console showed `store.js booting...` then nothing.
+- **Root cause:** top-level `await import('./analytics.js')` in `store.js` was
+  blocking module evaluation. On the deployed site, `analytics.js` and its
+  transitive Firebase SDK imports from `gstatic.com` were slow enough that the
+  await never resolved. The loader never hid. The page never rendered.
+- **Fix:** replaced with fire-and-forget `import('./analytics.js').then(...)`
+  pattern. `store.js` now finishes evaluating immediately; analytics loads in
+  the background and silently no-ops until ready.
+
+**Manifest (`public/manifest.json`) — updated**
+- Fixed `theme_color` and `background_color` from `#031C4E` (typo/unused)
+  to `#1B2B6B` (matches the `theme-color` meta tag used everywhere)
+- Added `description`, `scope`, `orientation`, `lang`, `dir`, `categories`
+- Icons: kept single-logo entry with `"sizes": "any"` to avoid the size-lie
+  that the previous 192x192 / 512x512 entries declared (same file for both).
+  A future polish pass can create real 192x192 and 512x512 icons.
+
+**Homepage footer — payment image swap**
+- `public/index.html` — the three SVG icons (Visa / Mastercard / G Pay) in
+  the footer "We accept" row replaced with a single `<img>` at
+  `img/payment.png` (173×30).
+- `public/css/index.css` — added `.footer-payments-img` rule. Old `.pay-icon`
+  rules kept for reference (unused).
+- `alt` text: "Accepted payment methods: Visa, Mastercard, Google Pay" — for
+  accessibility if the image fails to load.
+
+**Admin — product image upload (client-side, no AI)**
+- `public/admin/js/products.js` — full replacement:
+  - Single-product modal now accepts **file uploads** for main image + additional images
+  - Client-side resize to 400×400, JPEG quality 0.85, cap 250 KB
+  - Uploads to Firebase Storage at `products/{storeId}/{productId}.jpg` and
+    `-2.jpg`, `-3.jpg` for additional images
+  - Old URL text inputs removed (image comes from upload only)
+  - Delete product now also removes its images from Storage (best-effort)
+- `public/admin/js/specials.js` — same treatment for special images, uploaded
+  to `specials/{specialId}.jpg`
+
+**Admin — bulk add products (no AI)**
+- New **"Add Multiple"** button next to "Add Product" opens a bulk modal
+- Table with editable rows: IMG / Name / Weight / Price / **Description** / Stock / Delete
+- Paste-to-fill: parses tab-separated (Excel), pipe-separated, "name - Rxx.xx",
+  or free-text with trailing price
+- Per-row image picker (`[+]` button) **and** bulk image upload (multi-select,
+  fills empty rows in order)
+- Cap: **100 rows per batch**
+- Saves in chunks of 5, 400ms delay between chunks (avoids Firebase Storage throttle)
+- Duplicate detection (same name + same store) with a warning
+- Progress bar showing X / total
+- Description column added in a follow-up (bulk modal supports it now)
+
+**Driver portal — complete rebuild**
+- Files rebuilt from scratch:
+  - `public/driver-register.html`
+  - `public/js/driver-register.js`
+  - `public/driver-login.html`
+  - `public/js/driver-login.js`
+  - `public/driver-dashboard.html`
+  - `public/js/driver-dashboard.js`
+  - `public/css/driver-auth.css`
+  - `public/css/driver-dashboard.css`
+
+- **Registration flow simplified:**
+  - Step 1: Full name, email, mobile (9 digits with fixed `+27` pill)
+  - Step 2: OTP verification
+  - Straight to dashboard. No vehicle reg, no license, no photos, no bank
+    details during registration.
+
+- **Guided onboarding on the dashboard:**
+  - Driver lands on dashboard with a **profile completion checklist** and
+    progress bar
+  - Checklist items: name, phone, email, vehicle reg, license number,
+    profile photo, vehicle photo, license photo, bank name, account holder,
+    account number, **email bank confirmation letter** (mailto link)
+  - "Continue setup" opens a modal that captures all missing fields in one place
+  - After 100% complete: "Pending approval" card
+  - Admin approves → dashboard shows Online toggle, earnings, orders
+
+- **Option B — drivers never appear in `users/` collection**
+  - Driver registration writes ONLY to `drivers/{phone}`. No `users/{uid}` doc.
+  - Driver login reads only `drivers/{phone}`.
+  - Driver dashboard auth check reads only `drivers/{phone}`.
+  - Customer signup SHOULD reject phone numbers that already exist in
+    `drivers/{phone}` — **this check is NOT YET in `global.js` and is the
+    next pending item** (see §24.2).
+
+- **Driver pages design:**
+  - Navy gradient hero on register/login/dashboard
+  - Orange primary buttons, rounded pill style
+  - Mobile-first (drivers use phones)
+  - Font Awesome now loaded async (`media="print" onload="this.media='all'"`)
+    so it doesn't block rendering
+  - Bottom nav on dashboard (Home / Orders / Profile / Logout)
+
+- **Everything else preserved:**
+  - Heartbeat every 30s when online
+  - Logout on tab close (with `driverLogout` call)
+  - Visibility-change handling (60s hidden → auto-offline if no assigned orders)
+  - Available orders listener (orderStatus == 'ready' + driverId == null)
+  - Assigned orders listener (driverId == phone, active statuses)
+  - Accept order → Cloud Function call
+  - Update status: collected → on_the_way (opens Google Maps directions) →
+    delivered (requires photo upload)
+  - Store address + phone from cache, clickable
+  - Countdown to time slot end for active orders
+  - Delivered-at time display for completed orders
+  - Earnings tracking
+
+**VS Code CSS lint (cosmetic)**
+- `.driver-onboarding { }` in `driver-dashboard.css` was flagged as empty
+  ruleset. Harmless. Fix is to delete the empty line.
+
+### 24.2 DO NOT CHANGE (additions to §0)
+
+Add these to the DO NOT CHANGE list:
+
+19. **Do NOT re-introduce `await import('./analytics.js')` in `store.js`** or
+    any other page module. Top-level await in ES modules blocks the whole
+    module. Use fire-and-forget `.then()` instead.
+
+20. **Do NOT expand the service worker's fetch interception to external
+    origins.** The SW must only cache same-origin static assets. External
+    requests (Firebase, Google, cdnjs, Yoco) must pass through untouched or
+    the SW will break the page when CSP blocks them.
+
+21. **Do NOT revert the `manifest.json` `theme_color` to `#031C4E`.** It must
+    match `#1B2B6B` (the site-wide `theme-color`).
+
+22. **Do NOT upload images to any host other than Firebase Storage.** Old
+    products may still have `i.postimg.cc` URLs — those are legacy, do not
+    create new ones. Migration plan in §24.4.
+
+23. **Do NOT create `users/{uid}` docs for drivers.** Option B: drivers live
+    only in `drivers/{phone}`. If you add a dual-write, the whole separation
+    falls apart.
+
+24. **Do NOT change the bulk-add cap of 100 rows** without testing in the
+    browser. Chrome tabs get sluggish above ~150 rows in the DOM table.
+
+### 24.3 Still open — immediately next
+
+1. **`global.js` — customer signup must reject driver phone numbers.**
+   Currently a phone number could register as both a customer and a driver
+   (the customer signup does not check `drivers/{phone}`). The driver signup
+   DOES check `users`. The customer side needs the reverse check added to
+   `initAuthModal()` in `global.js`, right after OTP confirm, before the
+   `setDoc` on `users/{uid}`.
+
+   **Owner agreed this is the next delivery.**
+
+2. **Product image migration** — 25 products still use `i.postimg.cc` URLs.
+   The other ~64 are now on Firebase Storage. The 25 need to be re-uploaded
+   via the admin (bulk or one by one), then their `image` field updated.
+   The admin now supports file upload so this is manual work by the owner.
+
+3. **Store page first-load performance** — solved for the JS hang, but the
+   underlying issue is still present: the store page loads ALL products for
+   a store at once with no pagination. A store with 200+ products will be
+   slow regardless. Pagination / virtualisation is deferred.
+
+### 24.4 Deferred / discussed but not built
+
+**Bulk AI product importer**
+- Owner considered using DeepSeek API to parse pasted product lists and
+  auto-categorise. Decided against:
+  - Complexity (needs a Cloud Function proxy so the API key isn't exposed)
+  - Risk (AI hallucinations on prices/categories)
+  - The manual bulk-add modal solves 90% of the problem with zero external cost.
+- If revived later: Cloud Function `bulkParseProducts`, API key in Secret
+  Manager, always show a preview before writing to Firestore.
+
+**Product schema refactor — "one product, many stores"**
+- Owner identified that in a delivery marketplace, bread is bread regardless
+  of which store sells it. Only price and stock differ per store.
+- Long-term schema:
+  - `products/{id} = { name, image, category, desc, weight, ... }` (master)
+  - `storeProducts/{id} = { storeId, productId, price, stock }` (variant)
+- Would eliminate per-store image re-uploads when onboarding new stores.
+- Deferred because it touches every public page + admin + cart + checkout.
+  Estimated 2–4 day delivery with high risk. Owner agreed to build image
+  upload on the current schema first, refactor later.
+
+**Specials merged into products**
+- Owner wants to add "this product has a special" toggle inside the product
+  modal so specials don't need a separate admin section.
+- Would require mirroring to the current `specials` collection to avoid
+  breaking the homepage / stores / store page reads. Then migrate the reads
+  to products and drop the mirror.
+- Deferred.
+
+### 24.5 Files changed 24 Sept 2026
+
+**Rebuilt / heavily modified:**
+- `firebase.json` — CSP additions
+- `public/sw.js` — rewrite (v3, pass-through external origins)
+- `public/js/store.js` — analytics import non-blocking
+- `public/manifest.json` — theme_color + new fields
+- `public/index.html` — payment image swap
+- `public/css/index.css` — `.footer-payments-img`
+- `public/admin/js/products.js` — file upload + bulk add + description
+- `public/admin/js/specials.js` — file upload
+- `public/admin/css/admin.css` — bulk modal + image upload styles
+- `public/driver-register.html`
+- `public/js/driver-register.js`
+- `public/driver-login.html`
+- `public/js/driver-login.js`
+- `public/driver-dashboard.html`
+- `public/js/driver-dashboard.js`
+- `public/css/driver-auth.css`
+- `public/css/driver-dashboard.css`
+
+**Untouched:**
+- `public/js/global.js` — the customer-side driver-check patch is next
+- `public/js/cart.js`, `checkout.js`, `account.js`, `notifications.js`,
+  `product-modal.js`, `cart-utils.js`
+- `functions/index.js` — Yoco secret migration still pending (E.3)
+- `admin.js` at root — still in use, unchanged
+
+### 24.6 Next priorities (in order)
+
+1. **`global.js` customer signup — reject driver phone numbers** (Option B completeness)
+2. **Owner manually migrates the 25 remaining postimg.cc product images**
+3. **Deploy** — the accumulated changes from this session
+4. **E.3 — Yoco secret migration** (still outstanding, see §22.3):
+   - Move `YOCO_TEST_SECRET_KEY` and `YOCO_LIVE_SECRET_KEY` to Secret Manager
+   - Remove the `console.log('🔑 Using LIVE key: ...')` line
+   - Fix `admin.auth is not a function` in `functions/index.js`
+   - Redeploy functions
+   - **Rotate the Yoco keys** (assume compromised)
+5. **Google Cloud Console** key restrictions for Firebase + Maps keys
+6. **Firestore security rules** review — still open in test mode
+7. **Storage security rules** review — still open in test mode
+8. **Store page pagination** for large stores (200+ products)
+
+### 24.7 Working style (unchanged)
+
+Same rules as §22.7 and §23.7:
+- One delivery at a time, test between each.
+- Look before writing.
+- Full file replacements for files under ~600 lines.
+- Explain before sending code.
+- Ask for console output before guessing.
+- Never assume previous context carries over — the README is the source of truth.
+- When in doubt, ask. Warn about risk before doing anything risky.
+
+### 24.8 Known cosmetic issues (deferred)
+
+- `.driver-onboarding { }` empty rule in `driver-dashboard.css` — VS Code
+  lint warning, no functional impact.
+- One product image in the store page hero modal is sometimes too large for
+  its container (owner said "leave it for now").
+- Some 25 products still show placeholder.jpg if their postimg.cc URL 404s
+  during migration.
+- Homepage hero and logo images are still large PNGs.
+- `manifest.json` uses a single icon with `"sizes": "any"` — a future polish
+  pass can create proper 192x192 and 512x512 files.
+
+### 24.9 Deployments
+
+**Not yet deployed.** Local testing is on Live Server at
+`127.0.0.1:5500/public/`. When ready:
+firebase deploy --only hosting # frontend only
+firebase deploy --only functions # after E.3 fix
+
+text
+
+Verify in incognito after deploy:
+- CSP errors gone
+- Store page loads in < 5 seconds
+- Font Awesome icons render
+- Auth (phone OTP) works — reCAPTCHA loads
+- Driver registration + login + dashboard works
+- Admin bulk add works
+- Admin single-product upload works
+- PWA install prompt appears (Chrome, non-incognito, mobile)
+
+End of addendum — 24 September 2026 (session #4)
+
+## 25. Update — 8 October 2026 (session handover #5)
+
+**Read §0 (DO NOT CHANGE) first.** Then §21, §22, §23, §24. This section
+captures everything done in sessions after §24. The site is NOT yet deployed
+with the newest admin revamp. Firestore and Storage rules are STILL OPEN and
+must be locked before public launch.
+
+### 25.1 What was done in these sessions
+
+**Driver payments — full loop closed**
+- New `public/admin/js/driverPayments.js` — admin view of pending/history
+  driver payment requests
+- Sidebar badge shows pending count
+- Actions: Pay, Reject, View details
+- `payDriver` Cloud Function patched: when called with a `requestId`, it
+  trusts the request's amount instead of the strict `driver.totalEarnings`
+  check
+- `public/admin/js/driverPayments.js` passes `requestId` in the payload
+
+**Admin PWA + push notifications**
+- `public/admin/manifest.json` — new manifest, scope `/admin/`, start_url
+  `./admin.html`, name "Ghost Admin"
+- `public/admin/admin.html` + `login.html` — PWA meta tags added
+  (apple-mobile-web-app-capable, apple-touch-icon, manifest link)
+- `public/admin/js/admin-main.js` — added `subscribeAdminToPush()`:
+  registers `firebase-messaging-sw.js` at root scope, requests notification
+  permission, gets FCM token via VAPID, saves it to
+  `users/{adminUid}.fcmTokens`, listens for foreground messages
+- `sendPushNotificationToAdmins()` helper added to `functions/index.js`
+- Hooked into:
+  - `onOrderCreated` → admin push on new order
+  - `onRefundRequestCreated` (new) → admin push on refund request
+  - `onDriverPaymentRequested` (new) → admin push on driver payment request
+  - `onItemRequestCreated` (new) → admin push on item request
+- **Owner confirmed push notifications work on real devices** (admin
+  install + permission + push received)
+
+**Dashboard revamp**
+- `public/admin/js/dashboard.js` — full replacement:
+  - Quick-link strip (Orders / Drivers / Store Notifs / Refunds /
+    Analytics)
+  - Live status row (Online now / Total customers / Drivers online /
+    Active orders)
+  - Current orders panel — live list of in-progress orders
+  - New orders (today) panel — orders created in last 24 hours
+  - Pending work panel — 4 clickable tiles
+  - Today panel — store earnings, delivery fees, driver payments
+  - Snapshot panel — stores, products, out of stock, approved drivers
+- **Owner confirmed working and "much better and more informative"**
+
+**Orders page revamp**
+- `public/admin/js/orders.js` — full replacement:
+  - Live / Test / All mode toggle (Live default)
+  - Test orders detected via `testMode === true` OR
+    `paymentStatus === 'test_mode'`
+  - Status filter dropdown matching customer app statuses
+  - **Store earnings** column replaces Total (subtotal + packaging only)
+  - Delivery fee shown separately inside View modal (greyed)
+  - Driver assignment via modal → auto-sets `orderStatus: 'assigned'`
+  - Removed inline pencil edit; **Edit status** button lives inside the
+    View modal footer
+  - **Delivered timestamp column** — shows `deliveredAt` (falls back to
+    `updatedAt`)
+- `public/admin/css/admin.css` — appended:
+  - Order mode toggle styles
+  - Test badge + yellow-tinted rows
+  - Modal overflow/scroll fixes
+  - Custom select arrow
+
+**Analytics revamp — per-store**
+- `public/admin/js/analytics.js` — full replacement:
+  - Global KPIs (abandoned carts / online now / total revenue /
+    deliveries) — **all test orders excluded**
+  - Per-store cards: logo, name, area, views 30d / orders 30d / earned 30d
+  - Click a store → detail modal:
+    - 3 time-window columns (5 min / 7 days / 30 days)
+    - Views, product views, special views, orders, earnings per window
+    - Top 5 items sold (30d)
+    - Top 5 specials viewed (30d)
+  - **WhatsApp report** button — pre-fills a report message to the store's
+    WhatsApp
+  - **Download report** button — generates a self-contained HTML file
+    with logo embedded as base64 (no library needed), filename
+    `Ghost-Shopper-Report-{StoreName}-{YYYY-MM-DD}.html`
+  - **Print / Save PDF** button — uses `@media print` to show only the
+    report
+- `public/admin/css/admin.css` — appended:
+  - Store card grid + hover
+  - Detail modal styles (time windows, top items/specials split)
+  - Print stylesheet (`.printing-store-report` hides everything except
+    the modal)
+
+**Store page — Request an Item feature**
+- `public/store.html` — added:
+  - "Can't find something? Ask us to add it" button under Browse Items
+  - Filter toolbar (Category + Sort) below search
+  - Request Item modal (`#requestItemModal`)
+- `public/js/store.js` — new features:
+  - `initRequestItemFeature()` opens modal, submits to `itemRequests`
+    collection
+  - Request tile appears as last card in browse grid
+  - `populateCategoryFilter()` builds category dropdown from products
+  - `applySort()` — price asc/desc, name A→Z/Z→A
+  - `applySearchAndCategoryFilter()` combines search + category + sort
+- `public/css/store.css` — appended:
+  - `.request-item-btn` styles
+  - `.browse-filters` styles
+  - `.browse-item-card.request-tile` styles
+  - Request modal form styles (duplicated from account.css — see note
+    below)
+
+**Cart page performance fix**
+- `public/js/cart.js` — top-level `await import('./analytics.js')`
+  removed (was blocking module evaluation → infinite loading on mobile)
+- Replaced with fire-and-forget `.then()`
+- `renderCart()` now runs synchronously from `localStorage` —
+  **cart renders immediately**, catalog loads in background
+- `catalogReady` / `catalogLoading` / `catalogError` flags —
+  search and alternates show "Loading items…" until ready, then
+  auto-refresh
+- `loadCatalog()` uses `Promise.all([stores, products])` instead of
+  sequential awaits
+- **Owner confirmed cart opens instantly on mobile after this fix**
+
+**Service worker version management**
+- `CACHE_VERSION` bumped `v3 → v4`
+- Explained to owner: the string is just a cache folder name; any new
+  string forces old caches to be deleted on activate
+- **Recommendation going forward: use date strings**
+  (`ghost-shopper-2026-10-08`) so DevTools shows the last-touched date
+
+**Login page — Forgot password removed**
+- `public/admin/login.html` — removed the "Forgot password" button
+- `public/admin/js/login.js` — removed `sendPasswordResetEmail` import +
+  handler + `forgotBtn` DOM ref
+- CSS `.admin-login-forgot` block kept but unused (harmless)
+
+### 25.2 DO NOT CHANGE (additions to §0)
+
+Add these to the DO NOT CHANGE list:
+
+25. **Do NOT remove the test-order filter from `analytics.js` or
+    `dashboard.js`.** A test order is anything with `testMode === true`
+    OR `paymentStatus === 'test_mode'`. Store owners must never see test
+    order figures.
+
+26. **Do NOT use top-level `await import()` in any page module.** It
+    blocks the entire module from evaluating. Use fire-and-forget
+    `.then()` — this is what fixed the cart page load hang on mobile.
+
+27. **Do NOT remove the `#requestItemModal` markup or the request tile
+    from `store.html` / `store.js`.** They're the customer feedback
+    channel — the entry point for the item-requests feature.
+
+28. **Do NOT remove `payDriver`'s `requestId` bypass.** The Function
+    trusts the amount when a `requestId` is passed. Removing it re-breaks
+    the driver payment loop (driver's `totalEarnings` is 0 by design —
+    the amount is computed from delivered orders).
+
+29. **Do NOT change `CACHE_VERSION` without understanding what it does.**
+    The string is a cache folder name — any change forces a fresh
+    install. Use date strings from now on.
+
+30. **Do NOT remove `sendPushNotificationToAdmins` from
+    `functions/index.js`.** Four triggers depend on it
+    (`onOrderCreated`, `onRefundRequestCreated`,
+    `onDriverPaymentRequested`, `onItemRequestCreated`).
+
+31. **Do NOT modify the print stylesheet** (`.printing-store-report`)
+    without testing both `window.print()` on desktop and mobile.
+
+### 25.3 Still open — IMMEDIATE
+
+**Firestore rules are STILL OPEN in test mode, expiring 11 October 2026.**
+After that date, every client request is denied — including the admin
+panel. This is the #1 priority.
+
+**Storage rules are also open.** Anyone can write/delete any file.
+
+**`admin.auth is not a function`** — bug in `functions/index.js`. The
+`createYocoCheckout` function calls `admin.auth().verifyIdToken()` but the
+admin SDK import is wrong for v2. The auth check silently falls through.
+**Security gap.**
+
+**App Check is off** — anyone can call Cloud Functions from a script.
+
+**Rate limiting** — no rate limits on `createYocoCheckout`,
+`sendPushNotification`, `payDriver`, `issueCreditNote`.
+
+**Package delivery pricing** — the packaging fee is hardcoded at R2.00 in
+`cart.js` and `checkout.js`. Needs to become per-store (default R1.80
+per owner's note in §25.1). Owner started discussing Delivery 4 for this
+but we paused to do security.
+
+### 25.4 Files changed in these sessions (post-§24)
+
+**Rebuilt / heavily modified:**
+- `public/admin/manifest.json` — NEW
+- `public/admin/admin.html` — PWA meta tags
+- `public/admin/login.html` — PWA meta tags + Forgot password removed
+- `public/admin/js/login.js` — Forgot password removed
+- `public/admin/js/admin-main.js` — subscribeAdminToPush added
+- `public/admin/js/dashboard.js` — full rewrite
+- `public/admin/js/orders.js` — full rewrite
+- `public/admin/js/analytics.js` — full rewrite (per-store)
+- `public/admin/js/driverPayments.js` — NEW
+- `public/admin/css/admin.css` — multiple appended sections
+- `public/js/cart.js` — top-level await removed + catalog refactor
+- `public/js/store.js` — request-an-item + filters + sort
+- `public/store.html` — request modal + filter toolbar + request button
+- `public/css/store.css` — request modal + filter + tile styles
+- `functions/index.js` — `sendPushNotificationToAdmins` +
+  `onRefundRequestCreated` + `onDriverPaymentRequested` +
+  `onItemRequestCreated` + `payDriver` `requestId` bypass
+
+**Patched:**
+- `public/admin/js/utils.js` — X-only modal close, body scroll lock
+- `public/admin/js/products.js` — modal close via `closeModal()`, bulk
+  parser rewrite (auto-detect weight/price regardless of column order),
+  category dropdown with "+ Add"
+- `public/admin/js/specials.js` — modal close via `closeModal()`
+- `public/js/product-modal.js` — "More in category" rail no longer
+  sliced to 12
+
+**Untouched:**
+- `public/js/global.js` — no changes
+- `public/js/firebase-config.js` — no changes
+- `public/js/cart-utils.js` — no changes
+- `public/js/checkout.js` — no changes
+- `public/js/account.js` — no changes
+- `public/js/notifications.js` — no changes
+- `public/js/my-orders.js` — no changes
+- `public/js/order-confirmation.js` — no changes
+- `public/config/env.js` — no changes
+- `public/sw.js` — bumped to v4, no logic changes
+
+### 25.5 Next priorities (in order)
+
+1. **Firestore rules — LOCK DOWN.** Biggest security gap. Test in
+   emulator, then deploy. This is the next delivery.
+2. **Storage rules — LOCK DOWN.** Same.
+3. **Fix `admin.auth is not a function`** in `functions/index.js`.
+4. **Enable App Check** (monitoring mode first).
+5. **Add rate limiting** to sensitive Cloud Functions.
+6. **Delivery 4 — packaging fee per store.** Global default + per-store
+   override in `stores.js` edit modal + `settings/packaging` doc +
+   `cart.js` + `checkout.js` read from the store doc.
+7. **Special auto-hide after end date** in admin specials list.
+8. **Item Requests admin viewer** — new sidebar item + table with
+   Pending/Added/Dismissed filters.
+9. **Admin visual polish** — colors, panel spacing, mobile touch
+   targets, sticky table headers.
+10. **Deploy the new layout** once all customer-facing pages are
+    consistent.
+
+### 25.6 What's tested and confirmed working
+
+- ✅ Admin email+password login (Firestore custom-created admins)
+- ✅ Admin PWA install + push notifications on real devices
+- ✅ Admin dashboard revamp (owner confirmed)
+- ✅ Orders page revamp (owner confirmed) — Live/Test/All filter,
+  store-earnings column, driver assign, delivered timestamp
+- ✅ Driver Payments admin view
+- ✅ Analytics per-store cards + detail modal + WhatsApp + Download +
+  Print
+- ✅ Store page "Request an Item" feature (writes to `itemRequests`)
+- ✅ Cart page instant load (top-level await fix)
+- ✅ Specials filter fix on homepage and store page (endDate excluded)
+- ✅ Product bulk-add parser accepts weight/name/price in any order
+- ✅ Product categories view (Products / Categories tabs)
+- ✅ Yoco payment end-to-end (owner confirmed real payment, R1 test)
+- ✅ Driver payment request → admin approval → `paidEarnings` update
+
+### 25.7 Known caveats / deferred
+
+- **Driver order status updates still client-side.** `driver-dashboard.js`
+  uses `updateDoc(doc(db, 'orders', orderId), { orderStatus })` directly.
+  When Firestore rules are locked, this will break unless we either keep
+  a scoped write rule OR migrate to a Cloud Function. Owner needs to
+  decide: (a) scoped client writes, or (b) Cloud Function migration.
+  **Recommendation: (a) for this delivery, (b) later.**
+
+- **Yoco webhook is a stub.** It logs the event and returns OK. Doesn't
+  create orders. Signature verification is not needed until we make it
+  do work. Documented in §25.3.
+
+- **Store hours and area parsing** relies on the string format
+  `"Mon-Fri 7:30am-6pm, Sat 7am-6pm, Sun 7:30am-5pm"`. Don't change
+  the admin store form's placeholder for this field.
+
+- **Packaging fee hardcoded at R2.00** — needs the per-store Delivery 4.
+
+- **`public/css/account.css` has the `.gs-form-group` and `.gs-btn-primary`
+  definitions.** `store.css` duplicates them because store.html doesn't
+  load account.css. Long term, these should move to `base.css`.
+
+### 25.8 Deployments
+
+**The newest admin revamp is NOT deployed.** Owner is testing on Live
+Server at `127.0.0.1:5500/public/`. Do not deploy until:
+1. Firestore rules are locked
+2. Storage rules are locked
+3. Owner confirms all pages still work after rules lock
+
+When ready:
+firebase deploy --only hosting
+firebase deploy --only functions
+
+text
+
+**Verify in incognito after deploy:**
+- Customer signup + browse + cart + checkout (all flows)
+- Admin panel every section
+- Driver dashboard (login, accept order, update status, request payment)
+- Push notifications fire on new order, refund request, driver payment
+  request, item request
+- PWA install prompt appears
+
+### 25.9 Working style (unchanged)
+
+Same rules as §22.7 and §23.7 and §24.7:
+- One delivery at a time, test between each.
+- Look before writing.
+- Full file replacements for files under ~600 lines.
+- Explain before sending code.
+- Ask for console output before guessing.
+- Never assume previous context carries over — the README is the source
+  of truth.
+- When in doubt, ask. Warn about risk before doing anything risky.
+
+### 25.10 How to work on this with an AI assistant — for the next session
+
+**First message to send the next AI:**
+
+1. Paste the full README (§0 through §25).
+2. Say: "Next is Firestore rules. Read §25.3 and §25.5 first."
+3. Paste the current `firestore.rules` file (or the rules from the
+   Firebase Console — they're still in test mode expiring 11 October
+   2026).
+4. Paste the sample documents from §25.5 to confirm data shapes.
+
+**The next AI should:**
+- Confirm the admin-check pattern (custom claim vs `get()` lookup)
+- Confirm Q1–Q5 from §25.5:
+  - Driver order updates: scoped client writes or Cloud Function?
+  - `settings/testMode`: admin-read-only?
+  - Abandoned carts: anyone create?
+  - `users/{uid}` create: client or Cloud Function?
+  - Interim rule for 11 October in case we don't ship in time?
+- Write the rules collection-by-collection
+- Test in the Firebase emulator, NOT production
+- Publish only after all flows pass
+
+### 25.11 Emergency interim rule (for 11 October 2026)
+
+If the real rules aren't ready by 11 October, use this stopgap in the
+Firebase Console → Firestore → Rules:
+rules_version = '2';
+service cloud.firestore {
+match /databases/{database}/documents {
+match /{document=**} {
+allow read: if true;
+allow write: if request.auth != null;
+}
+}
+}
+
+text
+
+**This is NOT secure** — any authenticated user can write anything. But
+it keeps the site running past the 11 October cutoff while we finish the
+real rules. Do NOT leave this in place past a few days.
+
+End of addendum — 8 October 2026 (session #5)
+
+---
+
+## 26. Update — 9 October 2026 (session handover #6)
+
+**Read §0 (DO NOT CHANGE) first.** Then §21–§25. This section **corrects
+several stale items in §25** and captures the sessions that came after.
+
+**⚠️ Read §26.1 before acting on §25.** Some of what §25 lists as "still
+open" was completed during these sessions. The next AI should not re-do
+work that is already deployed.
+
+---
+
+### 26.1 Corrections to §25 — do not act on these items
+
+The following were listed as open in §25.3 / §25.5 / §25.7 and have
+**since been completed**. Do **not** attempt them again.
+
+| §25 said | Actual status |
+|---|---|
+| "Yoco secret keys are hardcoded in `functions/index.js`" | **DONE.** `YOCO_TEST_SECRET_KEY`, `YOCO_LIVE_SECRET_KEY`, `YOCO_WEBHOOK_SIGNING_SECRET` are all in Firebase Secret Manager, read via `defineSecret()` at the top of `functions/index.js`. |
+| "`admin.auth is not a function` — bug in `functions/index.js`" | **DONE.** The problem was `admin.messaging()` on Admin SDK v14, not `admin.auth()`. `getMessaging()` is now imported from `firebase-admin/messaging` and used in all four push helpers. |
+| "The webhook is a stub" | **OUTDATED.** `yocoWebhook` is now the live payment-confirmation path. It verifies the Standard Webhooks signature (HMAC-SHA256, `webhook-id` / `webhook-timestamp` / `webhook-signature` headers, 180s replay window, `whsec_` secret), matches the incoming `payload.metadata.checkoutId` against the stored `pendingOrders.checkoutId`, validates amount and currency, and converts the pending order to a real order **inside a Firestore transaction** with full idempotency (`processedWebhookEvents/{eventId}` is written only on success). Failed events are recorded in `unmatchedWebhookEvents` and never reverse a converted order. |
+| "Firestore rules are still open in test mode" | **DONE.** Rules have been rewritten and deployed. See §26.4 for the current deployed set. |
+| "Storage rules are also open" | **DONE.** Rules deployed. See §26.5. |
+| "Admin panel is mid-migration between `admin.js` and `public/admin/js/*`" | **OUTDATED.** `admin.js` at root is no longer referenced by anything. The modular admin in `public/admin/js/*` is the live admin. |
+| "`createYocoCheckout` is the payment function" | **OUTDATED.** It's now a 410 shim. The live function is `createCardOrder`, a callable that runs order creation server-side. See §26.3. |
+
+---
+
+### 26.2 A1 verified — Yoco webhook confirmed working in production
+
+**This is the most important outcome of these sessions.**
+
+For weeks, the payment flow had one unverified assumption — "A1":
+
+> **A1:** The `id` field returned by `POST /payments.yoco.com/api/checkouts`
+> is equal to `webhook.payload.metadata.checkoutId` in the `payment.succeeded`
+> event.
+
+This was tested end-to-end on the live project on **9 October 2026** with
+a real R2 test payment:
+
+1. Owner added a real card to a test order.
+2. `createCardOrder` ran, created a `pendingOrders` doc, called Yoco,
+   stored the returned `checkoutId` (a `ch_...` string) on the pending doc.
+3. Yoco processed the payment. The customer was redirected back to
+   `order-confirmation.html`.
+4. Yoco sent the `payment.succeeded` webhook to
+   `https://us-central1-ghostshopza.cloudfunctions.net/yocoWebhook`.
+5. Signature verification passed.
+6. **The webhook matched `payload.metadata.checkoutId` to the stored
+   `pendingOrders.checkoutId` on the first attempt.**
+7. The conversion transaction ran and created a real `orders/{id}` doc.
+8. The webhook log line was:
+yocoWebhook: order 3zziUSjWLFFnojlVOVBH finalised (already=false)
+
+text
+
+**Conclusion: A1 is confirmed true in production.** `payload.metadata.checkoutId`
+does contain the same checkout ID that `POST /checkouts` returned.
+
+This means **card payments work end-to-end** on the live site. The order
+is created on the server, the store notification fires, the customer sees
+the confirmation.
+
+**What is still not resolved:** the webhook currently matches on
+`payload.metadata.checkoutId` only. If Yoco ever changes the payload
+shape, or if a future Yoco version stops echoing `metadata.checkoutId`, the
+matching will fail and events will land in `unmatchedWebhookEvents`. The
+code has fallback paths for `payload.metadata.pendingOrderId` and
+`payload.checkoutId` (cross-verified against the stored `checkoutId`), but
+those fallbacks have not been exercised in production. The primary path
+worked on the first real test.
+
+---
+
+### 26.3 Checkout refactor — server-side order creation
+
+**Before this session, checkout was a three-step flow:**
+
+1. Client creates `pendingOrders/{id}` with full cart + pricing data
+2. Client calls `createYocoCheckout` with the amount
+3. Client redirects to Yoco
+
+**Problem:** the client computed and sent the price. A malicious
+customer could open the browser console, edit the total, and send a
+smaller amount to Yoco. This was a real vulnerability.
+
+**After this session:**
+
+1. Client sends **only product IDs and quantities** to a new callable,
+`createCardOrder`
+2. `createCardOrder` reads the current price of each product directly
+from Firestore, computes subtotal + packaging + delivery server-side,
+reads `settings/delivery` for the default fee, and matches the address
+against `areas/*` to compute the correct delivery fee
+3. For wallet-only and test-mode orders, the order is written directly
+to `orders/*` inside a transaction
+4. For Yoco or split-card orders, `createCardOrder` writes a
+`pendingOrders/*` doc server-side and calls Yoco itself, storing the
+returned `checkoutId`
+5. The webhook converts the pending order to a real order
+
+**The client can no longer influence the price.** It can only list
+product IDs and quantities. All price data is server-authoritative.
+
+**The response shape from `createCardOrder` is:**
+
+```js
+{
+success: true,
+orderId: string | null,          // present for wallet-only / test-mode
+pendingOrderId: string | null,   // present for Yoco / split-card
+redirectUrl: string,             // where the client should navigate
+testMode?: boolean,
+idempotentReplay?: boolean,
+inProgress?: boolean             // when a duplicate call is mid-flight
+}
+Files changed: functions/index.js (added createCardOrder,
+converted createYocoCheckout to a 410 shim), public/js/checkout.js
+(placeOrder now calls the callable and never touches Firestore
+directly).
+
+26.4 Firestore rules — deployed
+The rules have been rewritten and deployed. Current state:
+
+orders — read is open (see note below), create is false,
+update is admin-only plus a scoped driver path (driver can only move
+their own assigned order through collected → on_the_way → delivered,
+and can only touch the specific fields those transitions write),
+delete is admin-only
+
+pendingOrders — full deny for clients. Only Cloud Functions write here.
+
+users — owner can read and write their own doc, but cannot
+change walletBalance, paidEarnings, totalEarnings, or role.
+Wallet-zeroing is only permitted as part of the account soft-delete
+flow (deleted: true + walletBalance: 0 in the same write).
+
+drivers — read is admin or the driver themselves. Driver update
+cannot change paidEarnings, totalEarnings, approved, suspended,
+rating, or reviewCount. Admin is unconstrained.
+
+refundRequests — customer can create their own with
+status: 'pending'; admin can also create on behalf. Update is admin
+only, and only for the fields message, userPhone, userName,
+updatedAt — status transitions are server-only via the
+rejectRefund and markRefundPaid callables.
+
+notifications — read is open to any signed-in user (this fixes
+the customer bell). Update is admin plus readBy / deletedFor for
+self.
+
+Server-managed collections — full deny for clients:
+idempotencyKeys, walletReservations, refundOperations,
+creditNoteOperations, orderAcceptOperations,
+processedWebhookEvents. unmatchedWebhookEvents is admin-read-only.
+
+⚠️ Note on the orders read rule: to make the store-accept page
+work (see §26.6), orders/{orderId} read was opened to
+if isSignedIn() for the session. This means any signed-in customer
+can technically read any order by its ID. Order IDs are Firestore
+random 20-char strings, so guessing one is impractical, but this is
+weaker than intended and is a known compromise. If the store-accept
+page is later moved to a Cloud Function that reads orders via Admin SDK,
+this rule can be closed back to "owner, assigned driver, admin".
+
+26.5 Storage rules — deployed
+products/{storeId}/{filename} — public read, admin write, images only, <5MB
+
+specials/{specialId} — public read, admin write
+
+stores/{storeId}/flyers/{filename} — public read, admin write
+
+drivers/{phone}/{filename} — driver-own-folder or admin write, images or PDF
+
+profile_pics/{uid} and users/{uid}/{filename} — self or admin write
+
+delivery_photos/{orderId}/{filename} — any signed-in user, images only
+
+notifications/{filename} — public read, admin write (used by the
+admin notification image upload)
+
+Catch-all deny
+
+26.6 Known issues at end of session
+1. Store-accept page "missing or insufficient permissions" — RESOLVED by opening orders read. See §26.4.
+
+2. Single-item orders that are fully refunded do not transition to refunded status.
+
+Owner's requirement: if all items in an order are rejected (out of
+stock / not accepted by store), the order should:
+
+Refund the full amount the customer paid — subtotal + packaging + delivery
+
+Set orderStatus: 'refunded'
+
+Not continue through packing → ready → delivered
+
+If some items are rejected but others remain: refund the rejected
+items only. Do not touch the delivery fee. Order continues normally.
+
+Status: patch has been written and sent to the owner (see the
+storeAcceptOrder replacement in the session before this addendum).
+Not yet deployed / tested.
+
+3. Notification header bell does not show unread count.
+
+updateNotificationBadge() in global.js reads from
+localStorage.gsNotifications, which is not the source of truth.
+Notifications live in the notifications Firestore collection.
+
+Fix: a small helper that queries Firestore for unread notifications
+on page load and on auth state change, and updates the header bell.
+Sent to the owner. Not yet deployed / tested.
+
+4. Notification detail image is cropped and not clickable.
+
+The customer notification modal currently shows images with
+object-fit: cover (crop) and no full-screen viewer. The owner wants
+the image to fit and to be clickable to open in a full-screen overlay.
+
+Fix: CSS and JS sent to the owner.
+Not yet deployed / tested.
+
+5. Store-accept page does not show recommended packaging.
+
+When the store rejects some items, the surviving item count determines
+how many packaging bags are needed (1 bag per 4 items, rounded up).
+The page should display this to the store owner. CSS and JS sent to the
+owner. Not yet deployed / tested.
+
+6. driver-dashboard.js still writes order status directly to Firestore.
+
+updateDoc(doc(db, 'orders', orderId), { orderStatus }). The Firestore
+rules for orders.update allow this only if the caller is the
+assigned driver and only for collected / on_the_way / delivered
+transitions with a specific set of changed fields. This works today, but
+it's brittle and bypasses the driverUpdateOrder callable. Long-term
+this should migrate to the callable. Deferred.
+
+7. store-accept.html still uses the Firebase Compat SDK.
+
+public/js/store-accept.js uses firebase.firestore() (namespaced
+compat API) rather than the modular v2 API. This is intentional — the
+page uses anonymous implicit reads. Do not migrate it to modular without
+testing the read path.
+
+26.7 Files changed this session
+Rebuilt / heavily modified:
+
+functions/index.js — added createCardOrder, rewrote
+storeAcceptOrder (transaction-safe), rewrote yocoWebhook with
+signature verification + multi-path matching, added rejectRefund,
+rewrote markRefundPaid, added getMessaging() fix, added
+requireAdmin and requireAuthPhone helpers, added idempotency
+logic to createCardOrder
+
+public/js/checkout.js — placeOrder now calls createCardOrder
+via httpsCallable, sends an idempotency key, handles inProgress
+
+public/js/order-confirmation.js — verifyPendingOrder now polls
+verifyPayment (6 attempts × 2.5s) instead of expecting an
+immediate result. Driver photo read from the order, not the driver doc.
+
+public/js/my-orders.js — reads driverPhoto from the order.
+loadOrders now filters by customerId (not customerPhone) to
+match the Firestore rules.
+
+public/admin/js/refunds.js — replaced processRefund with
+markRefundPaid (debit) and rejectRefund. Credit-note idempotency
+key generated once per modal.
+
+firestore.rules — full rewrite (see §26.4)
+
+storage.rules — added notifications/ path (see §26.5)
+
+public/admin/js/notifications.js — image upload via file picker,
+resize to 800px, upload to notifications/ in Storage
+
+Patched:
+
+public/js/notifications.js — sentAt query retained, CSS injection
+retained, detail view image CSS + full-screen overlay pending
+deployment
+
+26.8 Still open after this session (in priority order)
+Deploy the pending patches — storeAcceptOrder full-refund
+status change, notifications.js image viewer CSS, global.js
+header bell count, store-accept recommended packaging display
+
+Test the single-item full-refund flow end-to-end
+
+Verify the header bell shows unread count after deploy
+
+Verify the notification image viewer works on mobile
+
+Migrate driver-dashboard.js status updates to driverUpdateOrder
+
+Restrict orders read rule if store-accept is moved to a
+Cloud Function
+
+Decide on the packaging-refund policy — currently Option A
+(full refund only). If Option B is ever wanted (proportional refund),
+it needs a refundedPackagingCount field on the order.
+
+Google Cloud Console key restrictions — Firebase web key + Maps
+key still unrestriced
+
+App Check — monitoring mode first, then enforcement
+
+Rate limiting on callables — createCardOrder,
+sendPushNotification, payDriver, issueCreditNote
+
+26.9 DO NOT CHANGE (additions to §0 and §26)
+Add these to the DO NOT CHANGE list:
+
+Do NOT revert checkout.js to client-side createYocoCheckout.
+All order creation is server-side. Reverting re-opens the price-tamper
+vulnerability.
+
+Do NOT remove the signature verification from yocoWebhook.
+Every webhook is HMAC-verified before any state changes.
+
+Do NOT change the whsec_ secret handling. The secret is stored
+as whsec_<base64> in Secret Manager, prefix stripped and
+base64-decoded before use as the HMAC key.
+
+Do NOT remove the idempotency transaction from createCardOrder.
+The idempotencyKeys/{key} collection prevents duplicate orders and
+duplicate Yoco checkouts on network retries.
+
+Do NOT remove the pendingOrders transaction guard in the
+webhook. Duplicate webhook deliveries cannot create duplicate
+orders or double-consume wallet reservations.
+
+Do NOT add a fallback path to yocoWebhook that matches on
+payload.id. payload.id is the event ID, not a checkout ID.
+Only payload.metadata.checkoutId, payload.metadata.pendingOrderId,
+and (with cross-verification) payload.checkoutId are valid match
+keys.
+
+---
+
+## 27. Update — 10 October 2026 (session handover #7)
+
+**Read §0 (DO NOT CHANGE) first.** Then §21–§26. This section captures everything
+done in this session. The site is deployed, working, and the newest hours/checkout
+features are live on `ghostshopza.web.app`.
+
+### 27.1 What was done in this session
+
+**Weekly specials — round-robin by category.**
+- `public/js/cart-utils.js` — new `mixSpecialsByCategory(list)` helper. Pure
+  function, no side effects. Groups specials by `category` and interleaves them
+  so no two adjacent tiles share a category until only one remains.
+- `public/js/index.js` — `renderSpecials()` and `openSpecialsCarousel()` both
+  call the helper before rendering. Homepage grid and "See More" carousel
+  now show a mixed-by-category order instead of "newest 10".
+- Category order: category with the newest special goes first. Uncategorised
+  bucket at the end. Deterministic — same specials always produce the same order.
+- **Category order within the mix is derived from the newest special per
+  category**, not alphabetical. This is intentional.
+
+**Store hours — new structured editor and readers.**
+This was a two-part delivery: the admin editor (write side) and the storefront/
+checkout readers (read side). Shipped together because they depend on each other.
+
+New data shape written to every store on save:
+
+```js
+openingHours: {
+  mon: { sessions: [{ open: "07:30", close: "12:30" }, { open: "13:30", close: "18:00" }] },
+  tue: { sessions: [{ open: "07:30", close: "18:00" }] },
+  ...
+  sun: { sessions: [] }   // empty array = closed that day
+},
+hoursOverrides: [
+  { date: "2026-12-25", sessions: [] },                                    // closed
+  { date: "2026-12-24", sessions: [{ open: "07:30", close: "14:00" }] }    // half day
+],
+hours: "Mon 07:30-18:00; Tue 07:30-18:00; ..."  // synced for backwards compat
+Times are 24-hour "HH:MM" strings. All sessions per day, all days editable.
+
+Overrides are one-off dated exceptions (no recurring annual rules).
+
+hours string is regenerated from the structured data on every save. It's a
+fallback for anything still reading the old shape.
+
+Files changed:
+
+public/admin/js/stores.js — full replacement. Trading-hours <input> replaced
+with a weekly grid (7 rows, multi-session, closed toggle) + a dated overrides
+list + live preview of the generated string. Existing data backfilled on open:
+a store whose only field is the old flat hours string is parsed into the grid.
+
+public/admin/css/admin.css — new "TRADING HOURS" section at the end.
+
+public/js/hours-utils.js — new shared file. Exports:
+
+getStoreStatus(store) → { state: 'open' | 'lunch' | 'closed', reopenAt?: 'HH:MM' }
+
+isStoreOpenNow(store) → boolean (true for both 'open' and 'lunch')
+
+getWeeklyHoursDisplay(store) → array of { day, times, closed } (Mon..Sun)
+
+Reads openingHours first, falls back to parsing the legacy hours string.
+
+Respects hoursOverrides by date.
+
+This is the single source of truth for "is the store open right now".
+
+Storefront badges — three-state.
+
+public/js/index.js and public/js/stores.js — store cards now show one of:
+
+Open (green) — currently inside a session
+
+Closed · back at HH:MM (amber) — currently between two sessions today
+(e.g. Friday lunch gap)
+
+Closed (red) — outside all sessions, or override says closed, or
+temporarilyClosed: true
+
+The amber "lunch" state is applied inline
+(style="background:#FEF3C7;color:#92400E;") so no CSS file changes were needed
+for the emergency patch. A proper .store-card-badge.lunch class exists in
+base.css and index.css (added in the same session).
+
+Store page hero — hours fact with toggle.
+
+public/js/store.js — renderHeader() now calls a new renderHoursFact()
+which builds a compact today-line plus a hidden 3×3 grid of all 7 days, with
+a toggle button.
+
+public/css/store.css — new section 16 with .store-hours-compact,
+.store-hours-today-line, .store-hours-toggle, .store-hours-grid,
+.store-hours-cell, .store-hours-day, .store-hours-time.
+
+Critical fix: .store-hours-grid[hidden] { display: none; } — the class
+rule .store-hours-grid { display: grid } was beating the browser's default
+[hidden] { display: none }, so the grid was always visible and the toggle
+looked broken. This is a general hazard — see §27.5.
+
+Checkout — session-aware time slots, 24-hour format.
+
+public/js/checkout.js — rewritten slot generator. Reads openingHours and
+hoursOverrides. Walks each session individually so no slot crosses a gap
+(no 12:00–13:00 Friday slot on a store with a lunch break).
+
+Slots are 24-hour format on the cards: 09:00 - 10:00. timeSlotDisplay sent
+to the server is also 24-hour.
+
+Lead time: now + 60 min, rounded up to the next hour (unchanged).
+
+Slot length: 60 minutes. Slot must end by session close.
+
+If today is closed or past all sessions, walks forward up to 14 days to the
+next open day with slots.
+
+Item requests — mandatory phone, admin viewer.
+
+public/store.html — request-modal phone field is now <input type="tel">
+with required styling and a hint. Field label reads "Your mobile number *".
+
+public/js/store.js — submitItemRequest() now validates that the contact
+field contains at least 9 digits. Fails with a toast if not.
+
+Pre-fill: prefillRequestContact() fills the field from
+auth.currentUser.phoneNumber, normalised to 0XXXXXXXXX. Runs on page load
+and on every onAuthStateChanged.
+
+New admin section: public/admin/js/itemRequests.js. Sidebar entry
+"Item Requests" between Driver Payments and Stores. Live via onSnapshot,
+filter tabs (Pending / Added / Dismissed / All), search, stats panel, WhatsApp
+reply button, Mark Added / Dismiss / Delete actions.
+
+public/admin/admin.html — one new sidebar button.
+
+public/admin/js/admin-main.js — new import and loaders-map entry.
+
+Firestore rules.
+
+New announcements block. Public read, admin write. Fixes the homepage
+announcement sheet permission error.
+
+New analytics_product_added block. Public create, admin read/update/delete.
+Fixes the analytics.js:196 add-to-cart write failure.
+
+Modified analytics_sessions. update now allows a client to change only
+lastActive and pages (the two fields updateSession() writes).
+
+Modified itemRequests. create changed from isSignedIn() to true so
+signed-out customers can submit requests.
+
+Service worker.
+
+public/sw.js — CACHE_VERSION bumped. Uses stale-while-revalidate for
+same-origin static assets, network-first for HTML navigations, pass-through
+for external origins (Firebase, Google, cdnjs, Yoco).
+
+27.2 DO NOT CHANGE (additions to §0)
+Add these to the DO NOT CHANGE list:
+
+Do NOT remove hours-utils.js and do NOT inline its functions back into
+the calling pages. It is the single source of truth for store open/closed
+state. It's imported by index.js, stores.js, store.js, and (imported
+but not yet used by) checkout.js.
+
+Do NOT add a display rule to any element that is toggled with the
+hidden attribute without also adding a matching [hidden] { display: none }
+rule at equal or higher specificity. See §27.5.
+
+Do NOT change the format of openingHours times. They are 24-hour
+"HH:MM" strings. hours-utils.js, the admin editor, checkout.js, and the
+storefront all assume this. am/pm in stored times will silently fail.
+
+Do NOT delete the synced hours string from the store schema yet. It's
+read as a fallback by hours-utils.js for any store that hasn't been
+re-saved since the new editor shipped. It can be removed once every store
+has been opened and saved at least once.
+
+Do NOT remove hoursOverrides from the store schema. The admin writes
+it, hours-utils.js reads it, checkout.js respects it. If a rule needs
+updating, add a new one — don't repurpose this.
+
+Do NOT change the item-requests phone validation to allow empty contact.
+The whole point of the field is to be able to WhatsApp the customer back.
+Submissions without a phone number are rejected client-side and this is
+intentional.
+
+27.3 Files changed this session
+New files:
+
+public/js/hours-utils.js
+
+public/admin/js/itemRequests.js
+
+Rebuilt / heavily modified:
+
+public/js/index.js
+
+public/js/stores.js
+
+public/js/store.js
+
+public/js/cart-utils.js
+
+public/js/checkout.js
+
+public/js/global.js (small patches only — no major changes)
+
+public/admin/js/stores.js
+
+public/admin/js/admin-main.js
+
+public/admin/admin.html
+
+public/css/base.css (added --amber token and .store-card-badge.lunch)
+
+public/css/index.css (added .store-card-badge.lunch)
+
+public/css/store.css (added section 16: hours fact)
+
+public/admin/css/admin.css (added trading hours section)
+
+public/store.html (contact field, #storeHours span → div)
+
+firestore.rules
+
+public/sw.js (version bump)
+
+Not touched:
+
+functions/index.js
+
+public/js/product-modal.js
+
+public/js/cart.js
+
+public/js/notifications.js, account.js, my-orders.js, order-confirmation.js
+
+admin.js at root
+
+27.4 Known issues / open items
+Deferred but known:
+
+Homepage preloads all products (up to limit(500)). Needed today so the
+product modal can show "More in category" alternates when a customer taps a
+special. Payload grows linearly with the catalogue — at 2,000 products this
+becomes ~2MB per homepage visit, which is significant on slow connections.
+Fix when needed: lazy-load products on demand when the modal opens,
+scoped to store and category. Touches product-modal.js (shared). Trigger:
+when the catalogue passes ~1,500 products or a customer reports the homepage
+feeling slow.
+
+Store page hero does not display override dates. If a store has entries
+in hoursOverrides, they affect the open/closed badge and checkout slots,
+but the store hero's 3×3 grid does not show them separately. Small follow-up.
+
+Store hours parser still exists in three places. hours-utils.js is the
+new one. There's still a legacy parseStoreHours in checkout.js used as a
+fallback. Old parsers in index.js and stores.js were removed. If a
+refactor comes up, checkout.js's fallback can be dropped once all stores
+have openingHours.
+
+First session of today's slot may be trimmed incorrectly on a store that
+opens at 08:00 and the customer is ordering at 07:45. The lead-time rule is
+now + 60 min rounded up. That means the first slot of the day is 09:00,
+not 08:00. This is intentional — it gives the store time to receive the
+order. But it's worth flagging because "next available slot" will feel
+conservative in this edge case.
+
+Still outstanding from earlier sections:
+
+Yoco secret rotation (§22.3) — assume leaked, rotate in Yoco dashboard
+
+Google Cloud Console key restrictions (§16 issue #11)
+
+App Check — currently off (§25.3)
+
+Rate limiting on createCardOrder, sendPushNotification, payDriver,
+issueCreditNote
+
+Firestore rules review for storage (§26.5 already done, but review periodically)
+
+27.5 The [hidden] CSS override hazard — read this
+This cost us hours. Understanding it will save time in the future.
+
+The browser's default stylesheet has:
+
+css
+[hidden] { display: none; }
+Any class-level display rule beats this. Example:
+
+css
+.store-hours-grid {
+  display: grid;   /* ← specific selector, beats [hidden] */
+}
+If .store-hours-grid also has the hidden attribute, the browser shows it
+anyway — the class rule wins. Setting element.hidden = true in JS has no
+visual effect.
+
+Whenever you write a class that sets display and the element is also toggled
+with hidden, you MUST add a matching rule:
+
+css
+.store-hours-grid[hidden] {
+  display: none;
+}
+The [hidden] attribute selector combined with the class selector has higher
+specificity than the class alone, so display: none wins when hidden is
+present.
+
+Where to check: search base.css and store.css for any class where the
+element is also toggled with hidden or [hidden]. If there's no matching
+[hidden] { display: none } rule, it's a latent bug.
+
+27.6 Confirmed tested and working
+Weekly specials round-robin on homepage grid and carousel
+
+Store cards three-state badge on homepage and stores page
+
+Store hero hours fact with toggle
+
+Checkout slots — no crossing of gaps on split days, 24-hour format
+
+Admin hours editor — round-trip (save, reload, re-open shows the same data)
+
+Item requests — signed-out submission, phone validation, admin panel view
+
+Firestore rules deployed; announcements and analytics errors cleared
+
+27.7 Deployments
+Deployed to ghostshopza.web.app during the session. SW version bumped. Hard
+refresh required after deploy for users with old cached SW to pick up the new
+one.
+
+27.8 Working style (unchanged)
+Same rules as §22.7, §23.7, §24.7, §25.9:
+
+One delivery at a time, test between each.
+
+Look before writing.
+
+Full file replacements for files under ~600 lines.
+
+Explain before sending code.
+
+Ask for console output before guessing.
+
+Never assume previous context carries over — the README is the source of truth.
+
+When in doubt, ask. Warn about risk before doing anything risky.
+
+27.9 Handover to next session
+Start here: read §27 fully, then §0 (DO NOT CHANGE).
+
+Highest priority open item (by risk, not by urgency): rotate the Yoco keys.
+They were in source control before Secret Manager. Do it in the Yoco dashboard,
+update Secret Manager, redeploy functions.
+
+Everything else is optional polish or hardening. Nothing is broken. The
+site works.
+
+Small follow-ups that would improve the store page:
+
+Display hoursOverrides in the hero's 3×3 grid (see §27.4 item 2)
+
+Sweep base.css and store.css for other [hidden] override bugs (§27.5)
+
+Do NOT attempt without reading the DO NOT CHANGE list: migrating to React,
+replacing Yoco, refactoring checkout to client-side order creation, deleting
+admin.js, or changing the security rules without reviewing every client.
+
+text
+
+---
+28. Update — 22 October 2026 (session handover #8)
+Read §0 (DO NOT CHANGE) first. Then §21 through §27. This section captures everything done in this session. The site is NOT deployed with these newest changes. Local testing is on Live Server.
+
+28.1 What was done in this session
+Out-of-Stock Enforcement (Full Block)
+The owner identified that customers could still add out-of-stock items to their cart. We implemented a "hard block" strategy across the entire stack to ensure out-of-stock items cannot enter the cart, and if they are already there, they are cleanly removed.
+
+public/js/cart-utils.js — addToCart() now checks if (product.stock === false). If true, it rejects the addition and returns an error message. This is the ultimate safety net; no UI bug can bypass it.
+
+public/js/product-modal.js — The shared modal now checks the live product's stock status.
+
+If out of stock: The image is greyed out, the price is replaced with "Out of Stock", the quantity selector is disabled, and the Add to Cart button is disabled.
+
+It also pulls the live stock status when opening, so if a special is out of stock, the modal correctly reflects it.
+
+public/js/store.js — The browse grid and specials rail now visually grey out (filter: grayscale(100%), opacity: 0.65) out-of-stock items. The click handlers are completely disabled for these cards.
+
+public/js/cart.js — Added a sanitizeCart() sweep. When the cart page loads, it checks the live stock status of every item. If any item is now out of stock, it is automatically removed from the cart, and a toast informs the customer.
+
+public/css/store.css — Added .is-out-of-stock styling and the red "Out of Stock" badge for special cards.
+
+Store Request Admin Panel (§27 follow-up)
+
+Confirmed public/admin/js/storeRequests.js was correctly created and wired into admin-main.js and admin.html. The sidebar now shows "Store Requests" with a pending count badge.
+
+28.2 DO NOT CHANGE (additions to §0)
+Add these to the DO NOT CHANGE list:
+
+Do NOT remove the product.stock === false check from cart-utils.js. This is the final boundary preventing out-of-stock items from entering the cart via any UI loophole.
+
+Do NOT remove the sanitizeCart() sweep from cart.js. This is what automatically cleans up a customer's cart if an item goes out of stock while they are browsing.
+
+Do NOT disable the "Out of Stock" state in product-modal.js. The owner explicitly wants the button disabled and the modal to show the out-of-stock state, rather than hiding the modal entirely, so the customer can still see the product details and alternatives.
+
+Do NOT remove the is-out-of-stock CSS class from store.css. It is used by both browse cards and special cards.
+
+28.3 Files changed this session
+Rebuilt / heavily modified:
+
+public/js/cart-utils.js — Hard block in addToCart
+
+public/js/product-modal.js — Stock checks, disabled states, grey-out logic
+
+public/js/store.js — Disabled click handlers, grey-out logic for browse/specials
+
+public/js/cart.js — Added sanitizeCart() sweep
+
+public/css/store.css — Added out-of-stock styling
+
+Not touched:
+
+public/js/index.js, public/js/stores.js
+
+functions/index.js
+
+admin.html, admin-main.js (already wired for store requests)
+
+28.4 Where we are with the Delivery Fee (E1-E4 plan)
+We have the formula agreed (R18 base + R4/km) and the API (Routes API) enabled. However, we paused that work to fix the out-of-stock bug.
+
+When we return to the delivery fee, the order is:
+
+E1: Admin store form captures coordinates via Geocoding API on save.
+
+E2: Cloud Function calculates the fee using Routes API based on store vs. customer distance.
+
+E3: Storefront displays update ("Delivery from RXX").
+
+E4: Checkout shows the fee at the address step.
+
+28.5 The Way Forward — Driver Portal Roadmap
+The driver portal was rebuilt in §24, but we need to finalize a few things to make it production-ready and secure. Here is the recommended sequence for the next AI:
+
+Priority 1: Secure the Driver Order Updates
+
+Problem: Currently, public/js/driver-dashboard.js updates order statuses (e.g., collected, on_the_way, delivered) by writing directly to Firestore (updateDoc(doc(db, 'orders', orderId), { orderStatus })). When the Firestore rules are locked down, this will break unless the rules explicitly allow drivers to update specific fields.
+
+Solution: Migrate driver-dashboard.js to use the existing driverUpdateOrder Cloud Function instead of direct Firestore writes. The function already has the logic to verify the driver, check allowed status transitions, and send push notifications to the customer.
+
+Priority 2: Fix the Driver Banking Details Flow
+
+Problem: The driver registration flow captures banking details in the onboarding modal, but there is no easy way for the admin to see these details when paying the driver (other than looking at the raw Firestore doc).
+
+Solution: Update public/admin/js/driverPayments.js and the payDriver view modal to display the driver's bank name, account holder, and account number. This allows the admin to process the EFT directly from the app.
+
+Priority 3: Driver Earnings & Payment History
+
+Problem: Drivers can request a payment (requestDriverPayment), but they cannot see a history of past payments or a breakdown of their earnings per order.
+
+Solution: Add an "Earnings" or "History" tab to the driver dashboard. This should query the driverPayments collection where driverPhone == currentUser.phone and display a list of past requests (Paid / Pending / Rejected) with amounts and timestamps.
+
+Priority 4: Driver Availability Toggle Improvements
+
+Problem: The "Online" toggle works, but if a driver loses cell signal or closes the app without logging out, they stay "Online" until the cleanupInactiveDrivers cron job runs 5 minutes later.
+
+Solution: Implement a more robust heartbeat. The dashboard already does this every 30s. Ensure the driverHeartbeat Cloud Function updates lastSeen. Consider adding a visibilitychange listener to set the driver offline immediately if they close the tab/app.
+
+Priority 5: Driver Ratings
+
+Problem: The drivers/{phone} schema has rating and reviewCount, but there is no flow for the customer to actually rate the driver after delivery.
+
+Solution: Add a "Rate your driver" prompt on the order-confirmation.html page or inside the my-orders.html view once the status hits delivered. This would write to a new driverReviews collection and update the average rating on the driver doc.
+
+28.6 Next immediate steps for the AI
+Ask the owner if they have tested the out-of-stock block on the live site.
+
+If tested and working, commit the changes and deploy the Hosting fix.
+
+Begin Priority 1 of the Driver Portal roadmap (migrating driver-dashboard.js to use the driverUpdateOrder callable).
+
+29. Update — 3 November 2026 (Session Handover #9)
+Read §0 (DO NOT CHANGE) first. Then §21 through §28. This section captures a massive debugging session focused on reducing Firestore reads, fixing mobile caching bugs, and resolving timezone issues. The site is deployed and stable.
+
+29.1 What was done in this session
+Massive Read Reduction & Caching (catalog-cache.js)
+
+The Problem: The site was burning through Firestore reads by fetching the entire 500+ product catalog on the homepage, store page, and cart page every single time a user visited.
+
+The Solution: We created public/js/catalog-cache.js. This module stores the 500+ products and all stores in localStorage.
+
+How it works: On page load, it checks the settings/catalog version document in Firestore (1 read). If the version matches the local cache, it serves the 500+ products from the phone's memory (0 reads). If the admin changes a product, the version increments, and the cache refreshes on the next load.
+
+Result: Store pages and Cart pages now load instantly and cost near-zero reads for returning users.
+
+The Homepage Specials Revert (No more caching for Specials)
+
+The Problem: Caching specials caused a nightmare of bugs. Specials expired at midnight, but the cache kept showing them until the version bumped. The timezone hacks we applied to fix this caused dates to shift backwards every time the admin clicked "Update".
+
+The Solution: We completely removed getSpecialsCache() from the homepage and stores page.
+
+How it works: The Homepage and Stores page now query Firestore directly for active specials on every load (limit 100). This guarantees 100% accuracy for expiration dates.
+
+The Trade-off: It costs ~100 reads per homepage visit, but stability was prioritized over absolute read-minimization for specials.
+
+Admin Date Shift Bug (Fixed)
+
+The Problem: When editing a special in admin/js/products.js, clicking "Update" caused the start date and end date to shift backwards by one day, every time.
+
+The Cause: JavaScript's toISOString() was converting the date to UTC, which pushed it back a day.
+
+The Fix: We now save dates as plain strings ("2026-11-03") instead of Date objects. We also removed the toISOString() conversion. The dates are now completely locked in place.
+
+Product Modal Refactor (Mobile Bug Fix)
+
+The Problem: On mobile PWAs, navigating away from the homepage and coming back caused the "Other Specials" rail to disappear because the mobile browser wiped the memory.
+
+The Fix: We removed the homepage rail entirely. We also updated the modal to detect if it is on a Store Page (using isStandaloneStorePage()).
+
+Result:
+
+Homepage: Shows item, price, "Visit Store", and "Add to Cart".
+
+Store Page: Shows item, price, "Add to Cart" (hides Visit Store), and shows the category rail using memory.
+
+29.2 DO NOT CHANGE (additions to §0)
+Do NOT re-enable caching for Specials. The getSpecialsCache() function is dead. We fetch specials directly from Firestore on every load to guarantee expired items vanish at midnight.
+
+Do NOT revert toDateInput() in admin/js/products.js. It uses getFullYear(), getMonth(), and getDate() to read local dates. If you change this back to toISOString(), the dates will shift backwards again.
+
+Do NOT change how specialStartDate and specialEndDate are saved in admin/js/products.js. They are saved as plain strings ("2026-11-03"), not Date objects. This prevents timezone math.
+
+Do NOT remove isStandaloneStorePage() from product-modal.js. It is what hides the "Visit Store" button when the user is already inside a store.
+
+Do NOT remove bumpCatalogVersion() from the Admin files. This is what automatically tells the catalog cache to refresh when you add/edit products.
+
+29.3 File Status (Current State)
+Created / Heavily Modified:
+
+public/js/catalog-cache.js — Caches products and stores. getSpecialsCache is no longer used.
+
+public/js/product-modal.js — Reverted to basic logic. No more baked-in otherSpecials. Uses isStandaloneStorePage() to hide the Visit Store button.
+
+public/js/index.js — Reads specials directly from Firestore (limit 100). Deleted the 500-product fetch.
+
+public/js/stores.js — Reads specials directly from Firestore (limit 100). Uses catalog-cache for the stores page.
+
+public/js/cart.js — Uses catalog-cache for the cart validation.
+
+public/admin/js/products.js — Added bumpCatalogVersion(). Fixed date saving to use plain strings. Fixed toDateInput() to stop the backwards shift.
+
+public/admin/js/specials.js — Added bumpCatalogVersion() on delete.
+
+public/admin/js/stores.js — Added bumpCatalogVersion().
+
+firestore.rules — Added allow read: if doc == 'catalog' to the settings collection.
+
+Deleted / Removed:
+
+The 500-product loadProducts() function from index.js.
+
+The otherSpecials baking logic from catalog-cache.js.
+
+29.4 Known Issues / Caveats
+Homepage Reads: The homepage reads 100 specials on every load. This is a conscious trade-off for stability. Do not "fix" this without a bulletproof alternative plan.
+
+Store Page Rail: The rail on the store page relies on _allProducts memory. If a user navigates away and comes back, the rail may disappear. This is a known mobile bfcache limitation.
+
+Catalog Version: The settings/catalog document must stay as an int64 (number). If you change it to a string, the increment(1) function in the admin will break.
+
+29.5 Next Priorities
+Test the Admin Date Shift: Confirm that adding a special for the 3rd to the 5th stays on the 3rd after hitting Update 5 times.
+
+Test the Mobile Modal: Confirm the Visit Store button is hidden on the Store page, and the Add to Cart works.
+
+Review the Driver Portal (from §28): We still need to show bank details in the admin driver payments, add an earnings history tab, and migrate driver updates to the Cloud Function.
+
+Update the README: Ensure this §29 is saved to the root of the project so the next AI knows exactly what happened today.
+
+29.6 Working Style (Unchanged)
+Same rules as §22.7, §23.7, §24.7, §27.8:
+
+One delivery at a time, test between each.
+
+Look before writing.
+
+Explain before sending code.
+
+Ask for console output before guessing.
+
+Never assume previous context carries over — the README is the source of truth.
+
+When in doubt, ask.
+
+End of addendum — 3 November 2026 (Session #9)
+
+## 30. Update — Ghost Stores Portal (Phase 1 & 2)
+
+**Status:** In Development (Local testing, not deployed)
+
+### 30.1 What is Ghost Stores?
+A separate portal for store owners and managers to manage their storefronts, products, and flyers. It uses the same Firebase project (`ghostshopza`) but lives on a different hosting target (`ghoststores.web.app`) and repository folder (`Ghost-Stores/`).
+
+### 30.2 Current Features Completed
+1. **Auth System:** 
+   - Separate registration for Owners and Managers.
+   - Email verification required.
+   - Password reset.
+   - Remember me functionality with session persistence.
+   - Custom Terms & Conditions modal on registration.
+2. **Admin Approvals:**
+   - Admin can view pending store applications and approve/reject them.
+   - Admin can view pending manager requests and approve/reject them (updates `users/{uid}.approved`).
+3. **Homepage (`index.html`):** 
+   - Modern hero slider, feature sections, and footer.
+   - Responsive mobile navigation.
+4. **Command Center Dashboard (`dashboard.html`):**
+   - Sidebar layout (navy blue, permanently visible on desktop, off-canvas on mobile).
+   - **Modern Topbar:** Hamburger menu is a rounded icon on the right side of the mobile topbar.
+   - **Compact Stats:** 2-column grid of color-coded stat cards (Earnings, Orders, Products, Managers, Branches).
+   - **Live Orders & Activity Log:** Split panel showing active orders and a timeline of recent actions.
+   - **Role-based Access:** Managers cannot see Earnings or the Add/Approve Managers tabs.
+   - **Logout:** Moved to the bottom of the sidebar, styled in red.
+
+### 30.3 Database Schema & Rules
+- `users/{uid}`: Extended with `role: 'store'`, `accountType: 'owner'|'manager'`, `approved: boolean`, `parentOwnerUid`, `permissions`.
+- `storeApplications/{uid}`: Tracks owner registration.
+- `managerRequests/{uid}`: Tracks manager registration.
+- `storeDirectory/{uid}`: Used for the manager registration dropdown (auto-created when admin approves a store).
+- **Rules:** Updated `firestore.rules` to allow public reads for approved `storeApplications` (for manager dropdown) and specific update permissions for owners managing their managers.
+
+### 30.4 What Still Needs to be Built
+1. **Store Management (Dashboard):**
+   - Add Product modal (with image compression to ~120KB max, 800px dimension).
+   - Add Specials to products (start/end dates, price).
+   - Flyers upload manager.
+   - Trading hours editor.
+2. **Branch Management (Dashboard):**
+   - Add/Edit branches (Google Places autocomplete for addresses).
+   - Branch changes require admin approval.
+3. **Manager List (Dashboard):**
+   - View list of approved managers with the option to delete/revoke access.
+4. **Admin UI (Ghost Shopper Admin Panel):**
+   - Admin UI to approve branches, view store profiles, and handle store publishing (Stage 2 approval).
+
+### 30.5 Deployment Notes
+- Deploy commands: 
+  `firebase deploy --only hosting:stores` 
+  `firebase deploy --only firestore:rules`
+- **Do not deploy functions** unless explicitly adding new backend logic (currently none needed for Phase 2).

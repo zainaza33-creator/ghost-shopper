@@ -1,0 +1,35 @@
+# .gitignore
+# Created for Ghost Shopper project
+
+# Environment files (NEVER commit these!)
+.env
+.env.local
+.env.*.local
+config/local-config.json
+config/env.js
+
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE files
+.vscode/
+.idea/
+
+# Firebase
+.firebase/
+*.firebaserc
+
+# Yoco secrets - never commit!
+*.secret
+*.key

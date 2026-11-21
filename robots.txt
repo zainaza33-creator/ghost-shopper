@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /account
+Disallow: /checkout
+Disallow: /my-orders
+Disallow: /notifications
+Disallow: /driver-dashboard
+Disallow: /driver-login
+
+Sitemap: https://ghostshopza.web.app/sitemap.xml

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Shopper — Notifications." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Ghost Shopper" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <title>Ghost Shopper — Notifications</title>
+  
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-K9X7L6MD');</script>
+  <!-- End Google Tag Manager -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="css/index.css" />
+  <link rel="stylesheet" href="css/notifications.css" />
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <link rel="apple-touch-icon" href="img/icon-192.png" />
+</head>
+<body>
+
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K9X7L6MD"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Cookie Consent Banner -->
+  <div class="cookie-banner" id="cookieBanner">
+    <div class="cookie-content">
+      <div class="cookie-text">
+        <i class="fas fa-cookie-bite"></i>
+        <div>
+          <h4>We use cookies</h4>
+          <p>We use cookies to improve your experience, analyse site traffic, and personalise content.</p>
+        </div>
+      </div>
+      <div class="cookie-actions">
+        <button class="cookie-btn cookie-accept" id="cookieAccept">
+          <i class="fas fa-check"></i> Accept All
+        </button>
+        <button class="cookie-btn cookie-decline" id="cookieDecline">
+          <i class="fas fa-times"></i> Decline
+        </button>
+        <button class="cookie-btn cookie-info" id="cookieInfoBtn">
+          <i class="fas fa-info-circle"></i> Learn More
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install Banner -->
+  <div class="install-banner" id="install-banner">
+    <p><i class="fas fa-mobile-alt"></i> Add <span>Ghost Shopper</span> to your home screen</p>
+    <button class="banner-install-btn" id="banner-install-btn">Install app</button>
+    <button class="banner-dismiss" id="banner-dismiss">&times;</button>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar-inner">
+      <a href="/" class="logo" aria-label="Ghost Shopper home">
+        <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="logo-img" />
+        <span class="logo-name">Ghost<span>Shopper</span></span>
+      </a>
+
+      <div class="nav-actions" style="margin-left:auto;">
+        <a href="driver-register.html" class="driver-link">
+          <i class="fas fa-motorcycle"></i>
+          <span>Drive</span>
+        </a>
+        <button class="nav-icon-btn desktop-only" id="desktopNotifyBtn" aria-label="Notifications">
+          <i class="fas fa-bell" aria-hidden="true"></i>
+          <span class="notif-badge" id="desktop-notif-count" style="display:none;">•</span>
+        </button>
+        <a href="cart.html" class="nav-icon-btn desktop-only" id="desktopCartBtn" aria-label="Cart">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          <span class="cart-badge" id="cart-count">0</span>
+        </a>
+        <button class="nav-icon-btn desktop-only" id="authBtn" aria-label="Sign in">
+          <i class="fas fa-user" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="notifications-page">
+    <div class="notifications-header">
+      <h1><i class="fas fa-bell"></i> Notifications</h1>
+      <button class="mark-all-read-btn" id="markAllReadBtn">
+        <i class="fas fa-check-double"></i> Mark all as read
+      </button>
+    </div>
+
+    <div class="notifications-container" id="notificationsContainer">
+      <!-- Injected by JS -->
+    </div>
+  </main>
+
+  <!-- Bottom Navigation (mobile) -->
+  <div class="bottom-nav">
+    <button class="nav-item" data-page="home">
+      <i class="fas fa-home"></i><span>Home</span>
+    </button>
+    <button class="nav-item active" data-page="notifications" id="bottomNotifyBtn">
+      <i class="fas fa-bell"></i>
+      <span>Alerts</span>
+      <span class="bottom-notif-badge" id="bottom-notif-count" style="display:none;">•</span>
+    </button>
+    <button class="nav-item" data-page="cart" style="position:relative;" id="mobileCartBtn">
+      <i class="fas fa-shopping-bag"></i><span>Cart</span>
+      <span class="bottom-cart-badge" id="bottom-cart-count">0</span>
+    </button>
+    <button class="nav-item" data-page="orders">
+      <i class="fas fa-truck"></i><span>Orders</span>
+    </button>
+    <button class="nav-item" data-page="account">
+      <i class="fas fa-user"></i><span>Account</span>
+    </button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ============================================================ -->
+  <!--  SCRIPTS - Load in order: ENV → Firebase → Global → Notifs   -->
+  <!-- ============================================================ -->
+  
+  <!-- 1. Environment Configuration (API Keys) -->
+  <script src="config/env.js"></script>
+  
+  <!-- 2. Firebase Configuration -->
+  <script type="module" src="js/firebase-config.js"></script>
+  
+  <!-- 3. Global Functions (shared across all pages) -->
+  <script type="module" src="js/global.js"></script>
+  
+  <!-- 4. Page-Specific JavaScript -->
+  <script type="module" src="js/notifications.js"></script>
+</body>
+</html>

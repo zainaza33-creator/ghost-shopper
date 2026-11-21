@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Shopper — Driver Dashboard." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ghost Driver" />
+
+  <link rel="manifest" href="manifest-driver.json" />
+  <link rel="icon" type="image/png" href="img/driver-favicon.png" />
+  <link rel="apple-touch-icon" href="img/icon-192.png" />
+  <title>Ghost Driver — Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  </noscript>
+
+  <link rel="stylesheet" href="css/driver-dashboard.css" />
+</head>
+<body>
+
+  <!-- ==================== LOADING ==================== -->
+  <div id="loadingScreen" class="driver-loading" role="status" aria-live="polite" aria-label="Loading dashboard">
+    <div class="driver-loading-inner">
+      <div class="driver-loading-spinner" aria-hidden="true"></div>
+      <div class="driver-loading-text">
+        Loading your dashboard<span class="driver-loading-dots" aria-hidden="true"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NAVBAR ==================== -->
+  <nav class="driver-nav" role="navigation" aria-label="Driver navigation">
+    <div class="driver-nav-inner">
+      <a href="driver-dashboard.html" class="driver-logo" aria-label="Ghost Driver home">
+        <img src="img/ghost-driver.png" alt="Ghost Driver" class="driver-logo-img" width="36" height="36" />
+        <span class="driver-logo-name">Ghost</span>
+        <span class="driver-badge">Driver</span>
+      </a>
+
+      <!-- Desktop nav tabs -->
+      <div class="driver-nav-tabs" id="driverNavTabs">
+        <button class="driver-nav-tab active" data-tab="home" type="button" aria-label="Home">
+          <i class="fas fa-home" aria-hidden="true"></i>
+          <span>Home</span>
+        </button>
+        <button class="driver-nav-tab" data-tab="orders" type="button" aria-label="Orders">
+          <i class="fas fa-truck" aria-hidden="true"></i>
+          <span>Orders</span>
+        </button>
+        <button class="driver-nav-tab" data-tab="profile" type="button" aria-label="Profile">
+          <i class="fas fa-user" aria-hidden="true"></i>
+          <span>Profile</span>
+        </button>
+        <button class="driver-nav-tab" id="navLogoutBtn" type="button" aria-label="Logout">
+          <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== MAIN ==================== -->
+  <main class="driver-page" id="dashboardContainer">
+    <!-- Injected by driver-dashboard.js -->
+  </main>
+
+  <!-- ==================== BOTTOM NAV (mobile) ==================== -->
+  <nav class="driver-bottom-nav" role="navigation" aria-label="Mobile driver navigation">
+    <button class="driver-nav-item active" data-tab="home" type="button">
+      <i class="fas fa-home" aria-hidden="true"></i><span>Home</span>
+    </button>
+    <button class="driver-nav-item" data-tab="orders" type="button">
+      <i class="fas fa-truck" aria-hidden="true"></i><span>Orders</span>
+    </button>
+    <button class="driver-nav-item" data-tab="profile" type="button">
+      <i class="fas fa-user" aria-hidden="true"></i><span>Profile</span>
+    </button>
+    <button class="driver-nav-item" id="mobileLogoutBtn" type="button">
+      <i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Logout</span>
+    </button>
+  </nav>
+
+  <!-- ==================== TOAST ==================== -->
+  <div class="driver-toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="config/env.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/driver-dashboard.js"></script>
+</body>
+</html>

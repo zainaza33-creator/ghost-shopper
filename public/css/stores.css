@@ -1,0 +1,940 @@
+/* ============================================================
+   STORES.CSS — Ghost Shopper Stores page (mall directory)
+   Requires base.css + index.css loaded first.
+   index.css provides: .special-card, .cat-chip, .stores-grid, etc.
+   ============================================================ */
+
+/* ============================================================
+   1. HERO STRIP (Image background, navy overlay, matching homepage)
+   ============================================================ */
+.stores-hero {
+  position: relative;
+  color: #fff;
+  padding: 56px 20px 72px;
+  overflow: hidden;
+  /* Removed min-height so it fits the image naturally */
+  display: flex;
+  align-items: center;
+}
+
+.stores-hero .hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.stores-hero .hero-bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Use cover but remove the zoom transform */
+  object-fit: cover; 
+  object-position: center;
+  filter: brightness(0.6); /* Slightly darker to help text stand out */
+}
+
+.stores-hero .hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(27, 43, 107, 0.85) 0%,
+    rgba(3, 14, 56, 0.75) 50%,
+    rgba(3, 14, 56, 0.85) 100%
+  );
+}
+
+.stores-hero .hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 1240px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---- Updated Hero Content ---- */
+.stores-hero .hero-content {
+  max-width: 720px;
+}
+
+.stores-hero h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+
+.stores-hero h1 em {
+  font-style: normal;
+  color: var(--orange);
+}
+
+.stores-hero p {
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  color: rgba(255,255,255,0.9);
+  line-height: 1.6;
+  margin: 0 0 28px;
+  max-width: 600px;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.3);
+}
+
+/* ---- Feature Pills ---- */
+.hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.hero-pill:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--orange);
+  transform: translateY(-1px);
+}
+
+.hero-pill i {
+  color: var(--orange);
+  font-size: 0.9rem;
+}
+
+/* ---- Responsive Adjustments ---- */
+@media (min-width: 900px) {
+  .stores-hero {
+    padding: 80px 32px 96px;
+  }
+}
+
+@media (max-width: 600px) {
+  .stores-hero {
+    padding: 40px 16px 56px;
+  }
+  .hero-pills {
+    gap: 8px;
+  }
+  .hero-pill {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+}
+
+/* ============================================================
+   2. PAGE SHELL
+   ============================================================ */
+.stores-page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+}
+@media (min-width: 769px) {
+  .stores-page { padding: 32px 32px 40px; }
+}
+@media (max-width: 480px) {
+  .stores-page { padding: 16px 14px 24px; }
+}
+
+/* ============================================================
+   3. RAIL SECTIONS (categories, specials, new arrivals)
+   ============================================================ */
+.stores-rail-section {
+  margin-bottom: 32px;
+}
+.stores-rail-head {
+  margin-bottom: 14px;
+  text-align: center;
+}
+.stores-rail-title {
+  font-size: clamp(1.15rem, 3vw, 1.45rem);
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.015em;
+  margin: 0 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.stores-rail-sub {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Categories rail (horizontal scroll on mobile, wraps on desktop) */
+.stores-cats-rail {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 4px 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.stores-cats-rail::-webkit-scrollbar { display: none; }
+@media (min-width: 769px) {
+  .stores-cats-rail {
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: visible;
+  }
+}
+.stores-cats-rail .cat-chip {
+  flex-shrink: 0;
+  min-width: 96px;
+}
+@media (min-width: 769px) {
+  .stores-cats-rail .cat-chip {
+    min-width: 110px;
+    flex-shrink: 0;
+  }
+}
+
+/* Rail scroll wrapper for specials & new arrivals */
+.stores-rail-scroll-wrapper {
+  margin: 0 -20px;
+  padding: 4px 20px 8px;
+  overflow: hidden;
+}
+@media (min-width: 769px) {
+  .stores-rail-scroll-wrapper { margin: 0 -32px; padding-left: 32px; padding-right: 32px; }
+}
+@media (max-width: 480px) {
+  .stores-rail-scroll-wrapper { margin: 0 -14px; padding-left: 14px; padding-right: 14px; }
+}
+
+.stores-rail-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.stores-rail-scroll::-webkit-scrollbar { display: none; }
+
+/* Special cards on stores page reuse .special-card from index.css */
+
+/* New arrivals mini-card */
+.stores-new-card {
+  flex: 0 0 140px;
+  scroll-snap-align: start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.stores-new-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--orange);
+}
+.stores-new-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: var(--bg);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+.stores-new-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.stores-new-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--orange-soft);
+  color: var(--orange);
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   4. SEARCH SECTION (compact, white card)
+   ============================================================ */
+.stores-search-section {
+  margin-top: 8px;
+}
+
+.stores-search-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 18px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+}
+@media (min-width: 769px) {
+  .stores-search-wrapper { padding: 22px 24px; }
+}
+
+.stores-search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 5px 5px 5px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.stores-search-container:focus-within {
+  border-color: var(--orange);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+}
+.stores-search-container > i {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.stores-search-container input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 0.95rem;
+  outline: none;
+  font-family: inherit;
+  color: var(--text);
+  min-width: 0;
+}
+.stores-search-container input::placeholder { color: var(--text-muted); }
+
+.search-clear-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+.search-clear-btn:hover { background: var(--border); color: var(--text); }
+
+/* Mode toggle */
+.search-mode-toggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.search-mode-toggle .mode-btn {
+  flex: 1;
+  padding: 9px 14px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border);
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+}
+.search-mode-toggle .mode-btn:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+.search-mode-toggle .mode-btn.active {
+  background: var(--orange);
+  color: #fff;
+  border-color: var(--orange);
+}
+
+/* Filter bar */
+.stores-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.stores-filter-bar::-webkit-scrollbar { display: none; }
+@media (min-width: 769px) {
+  .stores-filter-bar { flex-wrap: wrap; justify-content: center; }
+}
+
+.stores-filter-bar .filter-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: var(--surface);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+  min-height: 38px;
+}
+.stores-filter-bar .filter-tab:hover:not(.active) {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+.stores-filter-bar .filter-tab.active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
+/* Results count */
+.stores-results-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  padding: 2px 0;
+  text-align: center;
+}
+
+/* ============================================================
+   5. STORES GRID + CARDS (matching homepage feel)
+   ============================================================ */
+.stores-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  text-align: left;
+}
+@media (min-width: 600px) {
+  .stores-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+}
+@media (min-width: 900px) {
+  .stores-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.stores-grid.hidden { display: none !important; }
+
+/* .store-card styles are defined in base.css (shared across pages) */
+
+/* ============================================================
+   6. ITEMS RESULTS GRID
+   ============================================================ */
+.items-results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 4px 0;
+}
+@media (min-width: 481px) and (max-width: 768px) {
+  .items-results-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+@media (min-width: 769px) {
+  .items-results-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+}
+.items-results-grid.active { display: grid; }
+
+/* ============================================================
+   6b. ITEM RESULT CARDS (with floating + button)
+   ============================================================ */
+.item-result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  text-align: left;
+  position: relative;
+}
+.item-result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--orange);
+}
+
+.item-result-card .item-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+}
+.item-result-card .item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  background: #f3f4f6;
+  box-sizing: border-box;
+}
+
+/* Floating + button — matches special cards */
+.item-card-add-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--orange);
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(249,115,22,0.4);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.item-card-add-btn:hover {
+  background: var(--orange-dark);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(249,115,22,0.55);
+}
+.item-card-add-btn:active {
+  transform: scale(0.96);
+}
+
+/* Out of stock badge */
+.item-card-out-stock {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 3;
+  background: rgba(220, 38, 38, 0.92);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.item-result-card .item-body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.item-result-card .item-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  min-height: 2.4em;
+}
+.item-result-card .item-store-name {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.item-result-card .item-store-name i {
+  color: var(--orange);
+  margin-right: 4px;
+}
+.item-result-card .item-price {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--orange);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   7. NO RESULTS
+   ============================================================ */
+.no-results {
+  text-align: center;
+  padding: 56px 20px;
+  color: var(--text-secondary);
+}
+.no-results i {
+  font-size: 2.5rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 14px;
+}
+.no-results h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 6px;
+}
+.no-results p {
+  font-size: 0.88rem;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+.no-results .coming-soon-text {
+  color: var(--orange);
+  font-weight: 600;
+  margin-top: 8px;
+}
+@media (max-width: 480px) {
+  .no-results { padding: 36px 16px; }
+  .no-results i { font-size: 2rem; }
+  .no-results h3 { font-size: 1rem; }
+  .no-results p { font-size: 0.82rem; }
+}
+
+/* ============================================================
+   8. RESPONSIVE
+   ============================================================ */
+@media (max-width: 480px) {
+  .stores-rail-section { margin-bottom: 24px; }
+  .stores-rail-head { margin-bottom: 10px; }
+  .stores-rail-title { font-size: 1.05rem; }
+  .stores-rail-sub { font-size: 0.78rem; }
+  .stores-new-card { flex: 0 0 120px; padding: 10px 8px 10px; }
+  .stores-new-logo { width: 54px; height: 54px; }
+  .stores-new-name { font-size: 0.72rem; }
+  .stores-search-wrapper { padding: 14px 12px; margin-bottom: 12px; }
+  .search-mode-toggle .mode-btn { font-size: 0.76rem; padding: 8px 10px; min-height: 40px; }
+  .stores-filter-bar .filter-tab { font-size: 0.76rem; padding: 7px 13px; }
+
+  /* Item card tightening on small phones */
+  .item-result-card .item-body { padding: 8px 10px 10px; }
+  .item-result-card .item-name { font-size: 0.78rem; }
+  .item-result-card .item-price { font-size: 0.9rem; }
+  .item-card-add-btn { width: 34px; height: 34px; font-size: 0.85rem; right: 8px; bottom: 8px; }
+}
+
+/* Special-price display on stores page item cards */
+.item-result-card .item-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--orange);
+  margin-top: 2px;
+}
+.item-result-card .item-price-old {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.item-card-special-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  background: var(--orange);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+/* See All pill on the stores specials rail */
+.stores-rail-see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--orange-soft);
+  color: var(--orange-dark);
+  border: 1.5px solid var(--orange);
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  margin-top: 8px;
+}
+.stores-rail-see-all:hover {
+  background: var(--orange);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.stores-rail-see-all i {
+  font-size: 0.72rem;
+}
+
+/* ============================================================
+   9. STORE REQUEST TILE — "Can't find your store?"
+   Navy gradient tile at the end of the store grid.
+   ============================================================ */
+.store-request-tile {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(150deg, #1B2B6B 0%, #030E38 100%);
+  border: 1.5px dashed #F97316;
+  border-radius: 16px;
+  color: #fff;
+  padding: 28px 20px;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 130px;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.store-request-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(249,115,22,0.35);
+  border-style: solid;
+}
+.store-request-tile-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 420px;
+}
+.store-request-tile-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(249,115,22,0.2);
+  color: #F97316;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+.store-request-tile-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+}
+.store-request-tile-sub {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.68);
+  line-height: 1.4;
+}
+
+/* ============================================================
+   10. STORE REQUEST MODAL — form fields + footer buttons
+   .gs-modal chrome is in base.css. These rules cover the form
+   inputs, labels, and buttons that base.css doesn't define.
+   ============================================================ */
+#storeRequestModal .gs-form-group {
+  margin-bottom: 14px;
+}
+#storeRequestModal .gs-form-group:last-child {
+  margin-bottom: 0;
+}
+#storeRequestModal .gs-form-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text, #111827);
+  margin-bottom: 6px;
+}
+#storeRequestModal .gs-form-group input,
+#storeRequestModal .gs-form-group textarea,
+#storeRequestModal .gs-form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #ffffff;
+  color: var(--text, #111827);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-height: 46px;
+  box-sizing: border-box;
+}
+#storeRequestModal .gs-form-group input:focus,
+#storeRequestModal .gs-form-group textarea:focus,
+#storeRequestModal .gs-form-group select:focus {
+  outline: none;
+  border-color: var(--orange, #F97316);
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+}
+#storeRequestModal .gs-form-group .request-field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted, #9ca3af);
+  line-height: 1.4;
+}
+#storeRequestModal .gs-btn-primary,
+#storeRequestModal .gs-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 22px;
+  border-radius: 9999px;
+  border: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  min-height: 48px;
+  text-align: center;
+}
+#storeRequestModal .gs-btn-primary {
+  background: var(--orange, #F97316);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(249,115,22,0.25);
+}
+#storeRequestModal .gs-btn-primary:hover:not(:disabled) {
+  background: var(--orange-dark, #ea580c);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(249,115,22,0.35);
+}
+#storeRequestModal .gs-btn-secondary {
+  background: var(--bg, #F9FAFB);
+  color: var(--navy, #1B2B6B);
+  border: 1px solid var(--border, #e5e7eb);
+}
+#storeRequestModal .gs-btn-secondary:hover:not(:disabled) {
+  background: var(--border, #e5e7eb);
+}
+#storeRequestModal .gs-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+/* ============================================================
+   UPDATED HERO PILLS (Browse Stores Page)
+   ============================================================ */
+.stores-hero .hero-content {
+  max-width: 720px; /* Slightly wider to fit the pills */
+}
+
+.stores-hero h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  margin-bottom: 16px;
+}
+
+.stores-hero p {
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  color: rgba(255,255,255,0.85);
+  line-height: 1.6;
+  margin-bottom: 28px;
+  max-width: 600px;
+}
+
+.hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.hero-pill:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--orange);
+  transform: translateY(-1px);
+}
+
+.hero-pill i {
+  color: var(--orange);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .hero-pills {
+    gap: 8px;
+  }
+  .hero-pill {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+}

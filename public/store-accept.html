@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Shopper — Store order acceptance." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Ghost Shopper — Order Acceptance</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  </noscript>
+
+  <link rel="stylesheet" href="css/store-accept.css" />
+</head>
+<body class="store-accept-body">
+
+  <!-- ==================== NAVBAR ==================== -->
+  <nav class="driver-nav" role="navigation" aria-label="Store navigation">
+    <div class="driver-nav-inner">
+      <a href="index.html" class="driver-logo" aria-label="Ghost Shopper home">
+        <img src="img/ghost-shopper-logo.png" alt="" class="driver-logo-img" width="36" height="36" />
+        <span class="driver-logo-name">Ghost<span>Shopper</span></span>
+        <span class="driver-badge">Store</span>
+      </a>
+      <a href="https://wa.me/27628989813" target="_blank" rel="noopener" class="driver-nav-link">
+        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+        <span>Support</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="driver-hero">
+    <div class="driver-hero-inner">
+      <div class="driver-hero-icon" aria-hidden="true">
+        <i class="fas fa-store"></i>
+      </div>
+      <div class="driver-hero-eyebrow">
+        <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+        <span>Order Acceptance</span>
+      </div>
+      <h1>Confirm order items</h1>
+      <p>Review what the customer ordered and confirm stock.</p>
+      <div class="store-order-pill" id="orderIdDisplay">Loading...</div>
+    </div>
+  </section>
+
+  <!-- ==================== CONTENT ==================== -->
+  <main class="store-accept-main">
+    <div class="store-accept-card" id="content">
+      <div class="store-accept-loading">
+        <div class="store-accept-spinner" aria-hidden="true"></div>
+        <p>Loading order<span class="store-accept-dots" aria-hidden="true"></span></p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-functions-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
+  <script src="config/env.js"></script>
+  <script src="js/store-accept.js"></script>
+</body>
+</html>

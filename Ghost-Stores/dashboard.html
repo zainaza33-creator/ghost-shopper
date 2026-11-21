@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Dashboard — Ghost Stores</title>
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="css/store-auth.css" />
+</head>
+<body class="gs-dash-body">
+
+  <!-- Loading Screen -->
+  <div id="dashLoading" class="gs-loader-fullscreen">
+    <div class="gs-loader">
+      <div class="gs-spinner" aria-hidden="true"></div>
+      <p>Loading your command center…</p>
+    </div>
+  </div>
+
+  <!-- Pending Approval Screen -->
+  <div id="pendingView" class="gs-page" style="display:none; justify-content:center; align-items:center;">
+    <div class="gs-card" style="max-width: 480px; text-align:center;">
+      <div class="gs-pending-icon"><i class="fas fa-hourglass-half"></i></div>
+      <h2 class="gs-card-title">Approval pending</h2>
+      <p id="pendingText" class="gs-card-desc"></p>
+      <button class="gs-btn gs-btn-secondary gs-btn-full" onclick="signOutUser()" style="margin-top:16px;">
+        <i class="fas fa-sign-out-alt"></i> Sign out
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD LAYOUT -->
+  <div id="dashApp" class="gs-dash-layout" style="display:none;">
+
+    <!-- Mobile Overlay -->
+    <div class="gs-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="gs-sidebar" id="dashSidebar">
+      <div class="gs-sidebar-brand">
+        <img src="img/icon-192.png" alt="Ghost Store" width="32" height="32" />
+        <h1 class="gs-brand-title gs-brand-title-sm gs-title-white">Ghost <span class="gs-pill">Store</span></h1>
+      </div>
+
+      <nav class="gs-sidebar-nav">
+        <button class="gs-nav-item active" data-target="dashboard">
+          <i class="fas fa-chart-pie"></i> Command Center
+        </button>
+        <button class="gs-nav-item" data-target="profile">
+          <i class="fas fa-store"></i> Store Profile
+        </button>
+        <button class="gs-nav-item" data-target="products">
+          <i class="fas fa-box"></i> Products
+        </button>
+        <button class="gs-nav-item" data-target="flyers">
+          <i class="fas fa-images"></i> Flyers
+        </button>
+        <button class="gs-nav-item" data-target="hours">
+          <i class="fas fa-clock"></i> Trading Hours
+        </button>
+        <button class="gs-nav-item owner-only" data-target="managers" style="display:none;">
+          <i class="fas fa-user-tie"></i> Managers
+        </button>
+        <button class="gs-nav-item owner-only" data-target="add-branch" style="display:none;">
+          <i class="fas fa-code-branch"></i> Add Branch
+        </button>
+        <button class="gs-nav-item owner-only" data-target="notifications" style="display:none;">
+          <i class="fas fa-bell"></i> Notifications
+          <span class="gs-badge" id="notifBadge" style="margin-left:auto;" hidden>0</span>
+        </button>
+      </nav>
+
+      <div class="gs-sidebar-footer">
+        <button class="gs-nav-item" onclick="signOutUser()" style="color:var(--red); background:rgba(220,38,38,0.1);">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- CENTER CONTENT -->
+    <main class="gs-dash-main">
+      
+      <!-- Topbar -->
+      <header class="gs-dash-topbar">
+        <div class="gs-topbar-brand">
+          <img src="img/icon-192.png" alt="" width="28" height="28" />
+          <span class="gs-brand-title-sm gs-brand-title" style="font-size:0.9rem; margin:0;">Ghost <span class="gs-pill" style="font-size:0.5em;">Store</span></span>
+        </div>
+        <h2 id="mobilePageTitle">Command Center</h2>
+        <button class="gs-icon-btn modern-burger" id="mobileMenuBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+      </header>
+
+      <div class="gs-dash-content-wrapper">
+        
+        <!-- View: COMMAND CENTER -->
+        <div class="gs-view active" id="view-dashboard">
+          <div style="margin-bottom:20px;">
+            <h2 class="gs-card-title" id="approvedTitle">Welcome</h2>
+            <p class="gs-card-desc" id="approvedDesc" style="margin-bottom:0;"></p>
+          </div>
+
+          <!-- COMPACT STATS GRID (2 per line on mobile) -->
+          <div class="gs-cc-stats-grid">
+            <div class="gs-cc-stat-card" style="border-left:4px solid var(--green);">
+              <div class="gs-cc-stat-icon" style="color:var(--green); background:#dcfce7;"><i class="fas fa-wallet"></i></div>
+              <div class="gs-cc-stat-info">
+                <div class="gs-cc-stat-val">R0.00</div>
+                <div class="gs-cc-stat-lbl">Earnings</div>
+              </div>
+            </div>
+            <div class="gs-cc-stat-card" style="border-left:4px solid var(--orange);">
+              <div class="gs-cc-stat-icon" style="color:var(--orange); background:var(--orange-soft);"><i class="fas fa-shopping-bag"></i></div>
+              <div class="gs-cc-stat-info">
+                <div class="gs-cc-stat-val">0</div>
+                <div class="gs-cc-stat-lbl">Orders</div>
+              </div>
+            </div>
+            <div class="gs-cc-stat-card" style="border-left:4px solid var(--blue);">
+              <div class="gs-cc-stat-icon" style="color:var(--blue); background:#eff6ff;"><i class="fas fa-box"></i></div>
+              <div class="gs-cc-stat-info">
+                <div class="gs-cc-stat-val">0</div>
+                <div class="gs-cc-stat-lbl">Products</div>
+              </div>
+            </div>
+            <div class="gs-cc-stat-card" style="border-left:4px solid #8B5CF6;">
+              <div class="gs-cc-stat-icon" style="color:#8B5CF6; background:#f3e8ff;"><i class="fas fa-users"></i></div>
+              <div class="gs-cc-stat-info">
+                <div class="gs-cc-stat-val" id="managerCount">0</div>
+                <div class="gs-cc-stat-lbl">Managers</div>
+              </div>
+            </div>
+            <div class="gs-cc-stat-card" style="border-left:4px solid #ec4899;">
+              <div class="gs-cc-stat-icon" style="color:#ec4899; background:#fce7f3;"><i class="fas fa-code-branch"></i></div>
+              <div class="gs-cc-stat-info">
+                <div class="gs-cc-stat-val">1</div>
+                <div class="gs-cc-stat-lbl">Branches</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TWO COLUMNS: Orders & Activity -->
+          <div class="gs-cc-two-col">
+            <div class="gs-panel">
+              <div class="gs-panel-header">
+                <h3><i class="fas fa-fire" style="color:var(--orange);"></i> Live Orders</h3>
+                <span class="gs-panel-badge">0</span>
+              </div>
+              <div class="gs-panel-body">
+                <div class="gs-empty-state">
+                  <i class="fas fa-receipt"></i>
+                  <p>No active orders right now.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="gs-panel">
+              <div class="gs-panel-header">
+                <h3><i class="fas fa-history" style="color:var(--blue);"></i> Activity Log</h3>
+              </div>
+              <div class="gs-panel-body">
+                <div class="gs-activity-list">
+                  <div class="gs-activity-item">
+                    <div class="gs-activity-dot" style="background:var(--green);"></div>
+                    <div class="gs-activity-text"><strong>System</strong> initialized dashboard.<span class="gs-activity-time">Just now</span></div>
+                  </div>
+                  <div class="gs-activity-item">
+                    <div class="gs-activity-dot" style="background:var(--navy);"></div>
+                    <div class="gs-activity-text"><strong>You</strong> logged in.<span class="gs-activity-time">2 mins ago</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- View: Profile -->
+        <div class="gs-view" id="view-profile">
+          <h2 class="gs-card-title">Store Profile</h2>
+          <form id="profileForm" class="gs-form" style="margin-top:20px;">
+            <div class="gs-field">
+              <label>Store Logo</label>
+              <div style="display:flex; gap:16px; align-items:center;">
+                <div class="gs-img-preview" id="logoPreview">
+                  <i class="fas fa-image" style="font-size:2rem;color:var(--text-muted);"></i>
+                </div>
+                <div>
+                  <input type="file" id="logoInput" accept="image/*" style="display:none;" />
+                  <button type="button" class="gs-btn gs-btn-secondary gs-btn-sm" onclick="document.getElementById('logoInput').click()">
+                    <i class="fas fa-upload"></i> Upload Logo
+                  </button>
+                  <p class="gs-hint" style="margin-top:6px;">Auto-compressed to save space.</p>
+                </div>
+              </div>
+            </div>
+            <div class="gs-field"><label for="storeName">Store Name</label><input type="text" id="storeName" required /></div>
+            <div class="gs-field"><label for="storeAddress">Address</label><input type="text" id="storeAddress" placeholder="e.g. 123 Main Rd, Verulam" required /></div>
+            <div class="gs-field"><label for="storePhone">Contact Phone</label><input type="tel" id="storePhone" placeholder="e.g. +27 82 123 4567" required /></div>
+            <div class="gs-field"><label for="storeDescription">Short Description</label><textarea id="storeDescription" rows="3" placeholder="Tell customers about your store..."></textarea></div>
+            <button type="submit" class="gs-btn gs-btn-primary" style="align-self:flex-start; margin-top:10px;"><i class="fas fa-save"></i> Save Profile</button>
+          </form>
+        </div>
+
+        <!-- View: Products -->
+        <div class="gs-view" id="view-products">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 class="gs-card-title" style="margin:0;">Products</h2>
+            <button class="gs-btn gs-btn-primary gs-btn-sm"><i class="fas fa-plus"></i> Add Product</button>
+          </div>
+          <div class="gs-card" style="text-align:center; padding:40px 20px;">
+            <i class="fas fa-box-open" style="font-size:3rem; color:var(--text-muted); margin-bottom:16px;"></i>
+            <h3 style="color:var(--navy);">No products yet</h3>
+            <p class="gs-muted">Product management coming soon.</p>
+          </div>
+        </div>
+
+        <!-- View: Flyers -->
+        <div class="gs-view" id="view-flyers">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 class="gs-card-title" style="margin:0;">Flyers</h2>
+            <button class="gs-btn gs-btn-primary gs-btn-sm"><i class="fas fa-plus"></i> Add Flyer</button>
+          </div>
+          <div class="gs-card" style="text-align:center; padding:40px 20px;">
+            <i class="fas fa-images" style="font-size:3rem; color:var(--text-muted); margin-bottom:16px;"></i>
+            <h3 style="color:var(--navy);">No flyers uploaded</h3>
+            <p class="gs-muted">Flyer management coming soon.</p>
+          </div>
+        </div>
+
+        <!-- View: Hours -->
+        <div class="gs-view" id="view-hours">
+          <h2 class="gs-card-title">Trading Hours</h2>
+          <div class="gs-card" style="margin-top:20px; text-align:center; padding:40px 20px;">
+            <i class="fas fa-clock" style="font-size:3rem; color:var(--text-muted); margin-bottom:16px;"></i>
+            <h3 style="color:var(--navy);">Hours not set</h3>
+            <p class="gs-muted">Trading hours management coming soon.</p>
+          </div>
+        </div>
+
+        <!-- View: Managers (Owner only) -->
+        <div class="gs-view" id="view-managers">
+          <h2 class="gs-card-title">Managers</h2>
+          <div id="managerRequestsList" class="gs-list" style="margin-top:20px;"></div>
+          <p id="managerRequestsEmpty" class="gs-muted" style="display:none; margin-top:20px;">No pending manager requests.</p>
+        </div>
+
+        <!-- View: Add Branch (Owner only) -->
+        <div class="gs-view" id="view-add-branch">
+          <h2 class="gs-card-title">Add a Branch</h2>
+          <div class="gs-card" style="margin-top:20px; text-align:center; padding:40px 20px;">
+            <i class="fas fa-code-branch" style="font-size:3rem; color:var(--text-muted); margin-bottom:16px;"></i>
+            <h3 style="color:var(--navy);">Coming Soon</h3>
+            <p class="gs-muted">Multi-branch support coming soon.</p>
+          </div>
+        </div>
+
+        <!-- View: Notifications (Owner only) -->
+        <div class="gs-view" id="view-notifications">
+          <h2 class="gs-card-title">Notifications</h2>
+          <div class="gs-card" style="margin-top:20px; text-align:center; padding:40px 20px;">
+            <i class="fas fa-bell" style="font-size:3rem; color:var(--text-muted); margin-bottom:16px;"></i>
+            <h3 style="color:var(--navy);">No new notifications</h3>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="config/env.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/store-manager-requests.js"></script>
+  <script type="module" src="js/store-dashboard.js"></script>
+</body>
+</html>

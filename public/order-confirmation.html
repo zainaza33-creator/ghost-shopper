@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Shopper — Order Confirmation." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ghost Shopper" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link rel="preload" href="img/ghost-shopper-logo.png" as="image" />
+  <link rel="preload" href="css/base.css" as="style" />
+  <link rel="preload" href="css/index.css" as="style" />
+  <link rel="preload" href="css/order-confirmation.css" as="style" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <link rel="apple-touch-icon" href="img/icon-192.png" />
+  <title>Ghost Shopper — Order Confirmation</title>
+
+  <style>
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      background: #1B2B6B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.45s ease;
+      padding: 24px;
+    }
+    #loadingScreen.hidden { opacity: 0; pointer-events: none; }
+    #loadingScreen .loader {
+      text-align: center;
+      color: #fff;
+      width: 100%;
+      max-width: 260px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    #loadingScreen .loader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #F97316;
+      border-radius: 50%;
+      animation: gsLoaderSpin 0.85s linear infinite;
+    }
+    @keyframes gsLoaderSpin { to { transform: rotate(360deg); } }
+    #loadingScreen .loader-tagline {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.92);
+      text-align: center;
+      line-height: 1.4;
+    }
+    #loadingScreen .loader-dots::after {
+      content: '';
+      display: inline-block;
+      width: 1.5ch;
+      text-align: left;
+      animation: gsLoaderDots 1.5s steps(1, end) infinite;
+      color: #F97316;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    @keyframes gsLoaderDots {
+      0%   { content: '.'; }
+      25%  { content: '..'; }
+      50%  { content: '...'; }
+      75%  { content: ''; }
+      100% { content: '.'; }
+    }
+    #loadingScreen .loader-logo {
+      height: 44px;
+      width: auto;
+      display: block;
+      opacity: 0.85;
+    }
+  </style>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'" />
+
+  <link rel="stylesheet" href="css/base.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="css/index.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="css/order-confirmation.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/order-confirmation.css" />
+  </noscript>
+</head>
+<body>
+
+  <!-- ==================== LOADING SCREEN ==================== -->
+  <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading order">
+    <div class="loader">
+      <div class="loader-spinner" aria-hidden="true"></div>
+      <div class="loader-tagline">
+        Loading your order<span class="loader-dots" aria-hidden="true"></span>
+      </div>
+      <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="loader-logo" width="80" height="80" decoding="async" />
+    </div>
+  </div>
+
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K9X7L6MD"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <!-- ==================== NAVBAR ==================== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar-inner">
+      <a href="index.html" class="logo" aria-label="Ghost Shopper home">
+        <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="logo-img" width="88" height="88" decoding="async" />
+        <span class="logo-name">Ghost<span>Shopper</span></span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="stores.html" class="nav-icon-btn desktop-only" id="desktopStoresBtn" aria-label="Stores">
+          <i class="fas fa-store" aria-hidden="true"></i>
+        </a>
+        <button class="nav-icon-btn desktop-only" id="desktopNotifyBtn" type="button" aria-label="Notifications">
+          <i class="fas fa-bell" aria-hidden="true"></i>
+          <span class="notif-badge" id="desktop-notif-count" style="display:none;">•</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="desktopCartBtn" type="button" aria-label="Cart">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          <span class="cart-badge" id="cart-count">0</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="authBtn" type="button" aria-label="Sign in">
+          <i class="fas fa-user" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== CONFIRMATION HERO ==================== -->
+  <section class="confirmation-hero" id="confirmationHero" aria-label="Order confirmed">
+    <div class="confirmation-hero-inner">
+      <div class="confirmation-hero-icon" aria-hidden="true">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="confirmation-hero-eyebrow">
+        <i class="fas fa-receipt" aria-hidden="true"></i>
+        <span>Order confirmed</span>
+      </div>
+      <h1>Thank you!</h1>
+      <p id="confirmationHeroSub">Your order has been sent to the store. You'll receive updates shortly.</p>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN ==================== -->
+  <main class="confirmation-page">
+
+    <!-- Store badge -->
+    <div class="confirmation-store-badge" id="confirmationStoreBadge" hidden>
+      <i class="fas fa-store" aria-hidden="true"></i>
+      <span id="confirmationStoreName">—</span>
+    </div>
+
+    <!-- Receipt wrapper -->
+    <div class="receipt-wrapper">
+      <div class="receipt-header">
+        <div class="receipt-title">
+          <i class="fas fa-receipt" aria-hidden="true"></i>
+          Order Receipt
+        </div>
+        <div class="receipt-order-id" id="receiptOrderId">#------</div>
+      </div>
+      <div class="confirmation-container" id="confirmationContainer">
+        <div class="confirmation-loading">
+          <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+          <span>Loading your order...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Send receipt actions -->
+    <div class="send-receipt-actions" id="sendReceiptActions" hidden>
+      <button class="send-btn whatsapp" id="sendWhatsApp" type="button">
+        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+        <span>Send via WhatsApp</span>
+      </button>
+      <button class="send-btn email" id="sendEmail" type="button">
+        <i class="fas fa-envelope" aria-hidden="true"></i>
+        <span>Send via Email</span>
+      </button>
+    </div>
+
+    <!-- Bottom actions -->
+    <div class="confirmation-actions">
+      <a href="index.html" class="confirmation-btn primary">
+        <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+        <span>Continue Shopping</span>
+      </a>
+      <a href="my-orders.html" class="confirmation-btn secondary">
+        <i class="fas fa-list" aria-hidden="true"></i>
+        <span>My Orders</span>
+      </a>
+    </div>
+
+  </main>
+
+  <!-- ==================== BOTTOM NAV ==================== -->
+  <div class="bottom-nav" role="navigation" aria-label="Mobile navigation">
+    <button class="nav-item" data-page="home" type="button">
+      <i class="fas fa-home" aria-hidden="true"></i><span>Home</span>
+    </button>
+    <button class="nav-item" data-page="stores" id="bottomStoresBtn" type="button">
+      <i class="fas fa-store" aria-hidden="true"></i><span>Stores</span>
+    </button>
+    <button class="nav-item" data-page="cart" id="mobileCartBtn" type="button">
+      <i class="fas fa-shopping-bag" aria-hidden="true"></i><span>Cart</span>
+      <span class="bottom-cart-badge" id="bottom-cart-count">0</span>
+    </button>
+    <button class="nav-item" data-page="notifications" id="bottomNotifyBtn" type="button">
+      <i class="fas fa-bell" aria-hidden="true"></i>
+      <span>Alerts</span>
+      <span class="bottom-notif-badge" id="bottom-notif-count" style="display:none;">•</span>
+    </button>
+    <button class="nav-item" data-page="account" id="bottomAccountBtn" type="button">
+      <i class="fas fa-user" aria-hidden="true"></i><span>Account</span>
+    </button>
+  </div>
+
+  <!-- ==================== TOAST ==================== -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ==================== LEGAL MODAL CONTAINER ==================== -->
+  <div id="legalModalContainer" class="legal-modal" style="display:none;"></div>
+
+  <!-- ==================== AUTH MODAL ==================== -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" role="button" tabindex="0" aria-label="Close sign in">&times;</span>
+
+      <div class="auth-icon" aria-hidden="true">
+        <i class="fas fa-phone-alt"></i>
+      </div>
+      <h3>Sign in or Create Account</h3>
+      <p class="auth-sub">Enter your mobile number. We'll send you a one-time code.</p>
+
+      <form id="phoneForm">
+        <div class="form-group">
+          <label for="phoneNumber">Mobile Number <span style="color:var(--red,#dc2626);">*</span></label>
+          <div class="phone-input-group">
+            <span class="phone-input-prefix">+27</span>
+            <input
+              type="tel"
+              id="phoneNumber"
+              placeholder="82 123 4567"
+              inputmode="numeric"
+              maxlength="9"
+              pattern="[0-9]{9}"
+              autocomplete="tel-national"
+              required
+            />
+          </div>
+          <div class="auth-hint">Enter 9 digits — no leading 0, no country code.</div>
+        </div>
+        <button type="submit" id="sendOtpBtn">Send OTP</button>
+      </form>
+
+      <div id="otpSection" style="display:none;">
+        <div class="form-group">
+          <label for="otpCode">Enter 6-digit code</label>
+          <input type="text" id="otpCode" class="otp-code-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+          <small style="font-size:0.7rem;color:var(--text-muted,#9ca3af);">We sent a code to <span id="otpPhoneDisplay" style="font-weight:600;color:var(--navy,#1B2B6B);"></span></small>
+        </div>
+        <button id="verifyBtn" type="button">Verify & Sign In</button>
+        <button type="button" id="resendOtpBtn" style="background:transparent;border:none;color:var(--orange,#F97316);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;margin-top:0.5rem;display:block;width:100%;text-align:center;">Resend OTP</button>
+      </div>
+
+      <div id="authMessage"></div>
+      <div class="auth-extra">
+        <p>By continuing, you agree to our <a href="#" class="legal-link" data-modal="terms" style="color:var(--orange,#F97316);font-weight:600;text-decoration:none;">Terms of Service</a> and <a href="#" class="legal-link" data-modal="privacy" style="color:var(--orange,#F97316);font-weight:600;text-decoration:none;">Privacy Policy</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="config/env.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/global.js"></script>
+  <script type="module" src="js/order-confirmation.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == 'wedeliverzn@gmail.com';
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isSmallEnough() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // ============================================================
+    //  PRODUCTS
+    // ============================================================
+    match /products/{storeId}/{filename} {
+      allow read: if true;
+      allow write: if isAdmin() && isImage() && isSmallEnough();
+    }
+
+    // ============================================================
+    //  SPECIALS
+    // ============================================================
+    match /specials/{specialId} {
+      allow read: if true;
+      allow write: if isAdmin() && isImage() && isSmallEnough();
+    }
+
+    // ============================================================
+    //  STORE FLYERS
+    // ============================================================
+    match /stores/{storeId}/flyers/{filename} {
+      allow read: if true;
+      allow write: if isAdmin() && isImage() && isSmallEnough();
+    }
+
+    // ============================================================
+    //  DRIVERS (FIXED: Uses UID instead of phone_number)
+    // ============================================================
+    match /drivers/{uid}/{filename} {
+      allow read: if isSignedIn() || isAdmin();
+
+      // Allow the driver to upload their own documents (Images or PDFs)
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && (isImage() || request.resource.contentType == 'application/pdf')
+        && isSmallEnough();
+
+      // Allow admin to upload/replace documents
+      allow write: if isAdmin() && isSmallEnough();
+    }
+
+    // ============================================================
+    //  USER PROFILE PICS
+    // ============================================================
+    match /users/{uid}/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && isImage()
+        && isSmallEnough();
+
+      allow write: if isAdmin() && isImage() && isSmallEnough();
+    }
+
+    match /profile_pics/{uid} {
+      allow read: if true;
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && isImage()
+        && isSmallEnough();
+
+      allow write: if isAdmin() && isImage() && isSmallEnough();
+    }
+
+    // ============================================================
+    //  DELIVERY PHOTOS (FIXED: Uses UID)
+    // ============================================================
+    match /delivery_photos/{orderId}/{filename} {
+      allow read: if isSignedIn() || isAdmin();
+      allow write: if isSignedIn() && isImage() && isSmallEnough();
+    }
+
+    // ============================================================
+    //  NOTIFICATIONS
+    // ============================================================
+    match /notifications/{filename} {
+      allow read: if true;
+      allow write: if isAdmin() && isImage() && isSmallEnough();
+    }
+
+    // ============================================================
+    //  CATCH-ALL
+    // ============================================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Shopper — Local stores, delivered to your door in Verulam, KZN. Delivery from R35." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ghost Shopper" />
+  <meta name="google-site-verification" content="5oG_hQdkVodXYF_szICuqOtVAq-t_pjJZUcz-IrnOCs" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://maps.googleapis.com" />
+  <link rel="preconnect" href="https://payments.yoco.com" />
+  <link rel="preconnect" href="https://checkout.yoco.com" />
+
+  <link rel="preload" href="img/ghost-shopper-logo.png" as="image" />
+  <link rel="preload" href="css/base.css" as="style" />
+  <link rel="preload" href="css/index.css" as="style" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="img/favicon.png" />
+  <link rel="apple-touch-icon" href="img/icon-192.png" />
+  <title>Ghost Shopper — Local stores, delivered to your door</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'" />
+
+  <link rel="stylesheet" href="css/base.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="css/index.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/index.css" />
+  </noscript>
+
+  <style>
+    /* Critical inline styles — loader + cookie banner must render correctly on first paint */
+    .cookie-banner {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(70px + env(safe-area-inset-bottom, 0px) + 12px);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      padding: 16px;
+      z-index: 1900;
+      display: none;
+      max-width: 480px;
+      margin: 0 auto;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      box-sizing: border-box;
+    }
+    .cookie-banner.active { display: block; }
+    .cookie-banner *, .cookie-banner *::before, .cookie-banner *::after { box-sizing: border-box; }
+    .cookie-banner .cookie-content { display: flex; flex-direction: column; gap: 14px; }
+    .cookie-banner .cookie-text { display: flex; gap: 12px; align-items: flex-start; }
+    .cookie-banner .cookie-text > i { color: #F97316; font-size: 1.3rem; flex-shrink: 0; }
+    .cookie-banner .cookie-text h4 { margin: 0 0 4px; font-size: 0.95rem; font-weight: 700; color: #1B2B6B; }
+    .cookie-banner .cookie-text p { margin: 0; font-size: 0.8rem; color: #6b7280; line-height: 1.5; }
+    .cookie-banner .cookie-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cookie-banner .cookie-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #111827;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 42px;
+      white-space: nowrap;
+    }
+    .cookie-banner .cookie-btn.cookie-accept { background: #F97316; border-color: #F97316; color: #fff; }
+    @media (min-width: 769px) {
+      .cookie-banner { left: auto; right: 24px; bottom: 24px; margin: 0; }
+    }
+    /* ============================================================
+       LOADER — inline so it appears instantly on cold load
+       ============================================================ */
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      background: #1B2B6B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.45s ease;
+      padding: 24px;
+    }
+    #loadingScreen.hidden { opacity: 0; pointer-events: none; }
+    #loadingScreen .loader {
+      text-align: center;
+      color: #fff;
+      width: 100%;
+      max-width: 260px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    #loadingScreen .loader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #F97316;
+      border-radius: 50%;
+      animation: gsLoaderSpin 0.85s linear infinite;
+    }
+    @keyframes gsLoaderSpin { to { transform: rotate(360deg); } }
+    #loadingScreen .loader-tagline {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.92);
+      text-align: center;
+      line-height: 1.4;
+    }
+    #loadingScreen .loader-dots::after {
+      content: '';
+      display: inline-block;
+      width: 1.5ch;
+      text-align: left;
+      animation: gsLoaderDots 1.5s steps(1, end) infinite;
+      color: #F97316;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    @keyframes gsLoaderDots {
+      0%   { content: '.'; }
+      25%  { content: '..'; }
+      50%  { content: '...'; }
+      75%  { content: ''; }
+      100% { content: '.'; }
+    }
+    #loadingScreen .loader-logo {
+      height: 44px;
+      width: auto;
+      display: block;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== LOADING SCREEN ==================== -->
+  <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading Ghost Shopper">
+    <div class="loader">
+      <div class="loader-spinner" aria-hidden="true"></div>
+      <div class="loader-tagline">
+        Local deliveries made easy<span class="loader-dots" aria-hidden="true"></span>
+      </div>
+      <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="loader-logo" width="80" height="80" decoding="async" />
+    </div>
+  </div>
+
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K9X7L6MD"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <!-- ==================== COOKIE BANNER ==================== -->
+  <div class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Cookie consent">
+    <div class="cookie-content">
+      <div class="cookie-text">
+        <i class="fas fa-cookie-bite" aria-hidden="true"></i>
+        <div>
+          <h4>We use cookies</h4>
+          <p>We use cookies to improve your experience, analyse site traffic, and personalise content.</p>
+        </div>
+      </div>
+      <div class="cookie-actions">
+        <button class="cookie-btn cookie-accept" id="cookieAccept" type="button">
+          <i class="fas fa-check" aria-hidden="true"></i> Accept All
+        </button>
+        <button class="cookie-btn cookie-decline" id="cookieDecline" type="button">
+          <i class="fas fa-times" aria-hidden="true"></i> Decline
+        </button>
+        <button class="cookie-btn cookie-info" id="cookieInfoBtn" type="button">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Learn More
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NAVBAR ==================== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar-inner">
+      <a href="index.html" class="logo" aria-label="Ghost Shopper home">
+        <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="logo-img" width="88" height="88" decoding="async" />
+        <span class="logo-name">Ghost<span>Shopper</span></span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="stores.html" class="nav-icon-btn desktop-only" id="desktopStoresBtn" aria-label="Stores">
+          <i class="fas fa-store" aria-hidden="true"></i>
+        </a>
+        <button class="nav-icon-btn desktop-only" id="desktopNotifyBtn" type="button" aria-label="Notifications">
+          <i class="fas fa-bell" aria-hidden="true"></i>
+          <span class="notif-badge" id="desktop-notif-count" style="display:none;">•</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="desktopCartBtn" type="button" aria-label="Cart">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          <span class="cart-badge" id="cart-count">0</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="authBtn" type="button" aria-label="Sign in">
+          <i class="fas fa-user" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hidden mirror input so global.js can still bind its autocomplete logic -->
+  <input type="text" id="addressSearchInput" class="sr-only" tabindex="-1" aria-hidden="true" autocomplete="off" />
+  <div id="addressSuggestions" class="address-suggestions sr-only" aria-hidden="true"></div>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="hero" aria-label="Introduction">
+    <div class="hero-bg" aria-hidden="true">
+      <img src="img/hero-delivery.png" alt="" class="hero-bg-image" decoding="async" fetchpriority="high" />
+      <div class="hero-bg-overlay"></div>
+    </div>
+
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <i class="fas fa-map-pin" aria-hidden="true"></i>
+          <span>Now live in Verulam, KZN</span>
+        </div>
+        <h1>Your local stores,<br /><em>delivered to your door</em></h1>
+        <p>Get groceries, fresh meat, bread and everyday essentials from local stores around Verulam — without having to leave home.</p>
+
+        <div class="hero-search" id="heroSearch">
+          <div class="hero-search-box">
+            <i class="fas fa-location-dot hero-search-icon" aria-hidden="true"></i>
+            <label for="heroAddressInput" class="sr-only">Enter your address to check delivery availability</label>
+            <input
+              type="text"
+              id="heroAddressInput"
+              class="hero-search-input"
+              placeholder="Enter your address to check delivery availability"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="heroAddressSuggestions"
+            />
+            <button type="button" class="hero-search-clear" id="heroSearchClear" aria-label="Clear address" hidden>
+              <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="hero-search-btn" id="heroSearchBtn" aria-label="Check delivery availability">
+              <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </button>
+            <div id="heroAddressSuggestions" class="address-suggestions hero-suggestions" role="listbox" aria-label="Address suggestions"></div>
+          </div>
+          <p class="hero-search-hint" id="heroSearchHint">
+            Choose a store, add what you need, place your order and we'll arrange for a local rider to collect it and bring it to you.
+          </p>
+        </div>
+
+        <div class="hero-cta-row">
+          <a href="stores.html" class="btn-primary">
+            <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+            <span>Shop Now</span>
+          </a>
+          <a href="stores.html" class="btn-secondary">
+            <i class="fas fa-store" aria-hidden="true"></i>
+            <span>Browse Stores</span>
+          </a>
+          <a href="#how" class="btn-secondary">
+            <i class="fas fa-info-circle" aria-hidden="true"></i>
+            <span>How It Works</span>
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-val">Delivery from R35</div>
+            <div class="hero-stat-lbl">Depending on your location</div>
+          </div>
+          <div>
+            <div class="hero-stat-val">Around 1 hour</div>
+            <div class="hero-stat-lbl">Typical delivery window</div>
+          </div>
+          <div>
+            <div class="hero-stat-val">Local stores</div>
+            <div class="hero-stat-lbl">In and around your area</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN ==================== -->
+  <main class="main">
+
+    <section class="specials-section" id="specials" aria-labelledby="specials-heading">
+      <div class="section-head section-head-center">
+        <h2 class="section-title" id="specials-heading">Weekly Specials</h2>
+      </div>
+      <p class="section-sub">See what's on special at your local stores this week.</p>
+      <div class="specials-scroll-wrapper">
+        <div class="specials-scroll" id="specialsGrid"></div>
+      </div>
+    </section>
+
+    <section class="cats-section" aria-labelledby="cats-heading">
+      <div class="section-head">
+        <h2 class="section-title" id="cats-heading">Shop by Category</h2>
+      </div>
+      <p class="section-sub">Find what you're looking for quickly.</p>
+      <div class="cats-grid" id="categoriesGrid" role="list" aria-label="Product categories"></div>
+    </section>
+
+    <section class="stores-section" id="stores" aria-labelledby="stores-heading">
+      <div class="section-head section-head-center">
+        <h2 class="section-title" id="stores-heading">Stores Near You</h2>
+      </div>
+      <p class="section-sub">Enter your delivery address to see which stores deliver to you.</p>
+      <div id="storesMessage" style="display:none;text-align:center;padding:1rem;color:var(--text-secondary,#6b7280);font-size:0.9rem;background:var(--bg,#f9fafb);border-radius:12px;margin-bottom:1rem;">
+        <i class="fas fa-clock" style="color:var(--orange,#F97316);font-size:1.2rem;display:block;margin-bottom:0.3rem;"></i>
+        <span id="storesMessageText">We're coming soon to your area!</span>
+      </div>
+      <div class="filter-bar" role="tablist" aria-label="Filter stores">
+        <button class="filter-tab active" role="tab" aria-selected="true" data-filter="all" type="button">All stores</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="open" type="button">Open now</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="supermarket" type="button">Grocery</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="butchery" type="button">Butchery</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="bakery" type="button">Bakery</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="pharmacy" type="button">Pharmacy</button>
+      </div>
+      <div class="stores-grid" id="storesGrid" role="list" aria-label="Nearby stores"></div>
+    </section>
+
+    <section class="how-section" id="how" aria-labelledby="how-heading">
+      <div class="section-head section-head-center">
+        <h2 class="section-title" id="how-heading">How Ghost Shopper Works</h2>
+      </div>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-icon"><i class="fas fa-store" aria-hidden="true"></i></div>
+          <div class="how-num">1</div>
+          <div class="how-title">Choose a store</div>
+          <div class="how-desc">Enter your delivery address to check for delivery availability and browse the partner stores available in your area.</div>
+        </div>
+        <div class="how-card">
+          <div class="how-icon"><i class="fas fa-shopping-cart" aria-hidden="true"></i></div>
+          <div class="how-num">2</div>
+          <div class="how-title">Add what you need</div>
+          <div class="how-desc">Choose your products, add them to your cart and check your order before paying.</div>
+        </div>
+        <div class="how-card">
+          <div class="how-icon"><i class="fas fa-credit-card" aria-hidden="true"></i></div>
+          <div class="how-num">3</div>
+          <div class="how-title">Pay online</div>
+          <div class="how-desc">Pay securely when you place your order. Once your payment is confirmed, the order is sent through for processing.</div>
+        </div>
+        <div class="how-card">
+          <div class="how-icon"><i class="fas fa-truck" aria-hidden="true"></i></div>
+          <div class="how-num">4</div>
+          <div class="how-title">We collect and deliver</div>
+          <div class="how-desc">A local rider collects your order from the store and brings it straight to your door. You can follow the progress of your order from your account.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-section" id="about" aria-labelledby="about-heading">
+      <div class="about-split">
+        
+        <!-- Left Side: Text Content -->
+        <div class="about-text-content">
+          <div class="about-eyebrow">
+            <i class="fas fa-tag" aria-hidden="true"></i>
+            <span>About Ghost Shopper</span>
+          </div>
+          <h2 class="about-title" id="about-heading">Your local stores,<br /><em>delivered to you.</em></h2>
+          
+          <p class="about-lead">Ghost Shopper makes it easier to shop from local stores and have your order delivered to you.</p>
+          <p class="about-body">Instead of travelling to the store yourself, you can browse participating shops online, choose your items and have a local rider collect and deliver them.</p>
+          <p class="about-body">We're starting in <strong>Verulam, KZN</strong>, working with local businesses and riders in the area. As more stores join, you'll have more places to shop from.</p>
+          
+          <a href="about.html" class="btn-primary about-cta-btn">
+            <span>Learn More</span>
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+
+        <!-- Right Side: Image Only -->
+        <div class="about-image-wrap">
+          <img src="img/Ghost shopper Grocery Shopping.jpg" alt="Customer using Ghost Shopper" class="about-image" />
+          <div class="about-bg-curve"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="why-section" aria-labelledby="why-heading">
+      <div class="section-head section-head-center">
+        <h2 class="section-title" id="why-heading">Why use Ghost Shopper?</h2>
+      </div>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-store-alt" aria-hidden="true"></i></div>
+          <h3>Shop from local stores</h3>
+          <p>We work with stores in your community, so you can order from businesses you already know.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-tag" aria-hidden="true"></i></div>
+          <h3>Simple delivery</h3>
+          <p>Delivery starts from <strong>R35</strong>, depending on where you are located.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></div>
+          <h3>Convenient</h3>
+          <p>No driving to the shops, finding parking or carrying your groceries home. Place your order from your phone and we'll handle the delivery.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon"><i class="fas fa-heart" aria-hidden="true"></i></div>
+          <h3>Support local businesses</h3>
+          <p>Your order goes through the local store you choose, while local riders handle the delivery.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FAQ & CONTACT ==================== -->
+    <section class="faq-section" id="faq" aria-labelledby="faq-heading">
+      <div class="faq-container">
+        
+        <!-- Left Column: Contact -->
+        <div class="faq-sidebar">
+          <div class="faq-sidebar-head">
+            <h2 class="section-title" id="faq-heading">Frequently Asked Questions</h2>
+            <p class="section-sub">Find quick answers below, or reach out to us directly.</p>
+          </div>
+
+          <div class="contact-card">
+            <h3>Still have questions?</h3>
+            <p>Our team is here to help you with your orders, store partnerships, or anything else.</p>
+            <div class="contact-actions">
+              <a href="https://wa.me/27628989813" target="_blank" rel="noopener noreferrer" class="contact-btn whatsapp">
+                <i class="fab fa-whatsapp"></i> Chat on WhatsApp
+              </a>
+              <a href="mailto:wedeliverzn@gmail.com" class="contact-btn email">
+                <i class="fas fa-envelope"></i> Send an Email
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: FAQ Accordion -->
+        <div class="faq-content">
+          <div class="faq-list" id="faqList">
+            <!-- FAQ 1 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-1" id="faq-b-1">
+                  <span>What areas does Ghost Shopper deliver to?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-1" role="region" aria-labelledby="faq-b-1" hidden>
+                <p>Ghost Shopper is currently operating in <strong>Verulam, KZN</strong>. Enter your address on the website to see which stores and delivery options are available to you.</p>
+                <p>We're starting locally and will expand into more areas as we grow.</p>
+              </div>
+            </div>
+
+            <!-- FAQ 2 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-2" id="faq-b-2">
+                  <span>How much does delivery cost?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-2" role="region" aria-labelledby="faq-b-2" hidden>
+                <p>Delivery <strong>starts from R35</strong>. Your delivery fee is based on your delivery location and the available delivery option shown when you place your order.</p>
+              </div>
+            </div>
+
+            <!-- FAQ 3 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-3" id="faq-b-3">
+                  <span>How long does delivery take?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-3" role="region" aria-labelledby="faq-b-3" hidden>
+                <p>Most orders are handled within our available delivery windows, generally around <strong>one hour</strong>.</p>
+                <p>The exact delivery window is shown when you place your order.</p>
+              </div>
+            </div>
+
+            <!-- FAQ 4 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-4" id="faq-b-4">
+                  <span>Can I order from more than one store?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-4" role="region" aria-labelledby="faq-b-4" hidden>
+                <p>At the moment, each order is placed with <strong>one store at a time</strong>. If you want products from another store, you can place a separate order.</p>
+              </div>
+            </div>
+
+            <!-- FAQ 5 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-5" id="faq-b-5">
+                  <span>Do you add a markup to the products?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-5" role="region" aria-labelledby="faq-b-5" hidden>
+                <p>No. We don't add a product markup to your shopping.</p>
+                <p>The aim is to keep the product price the same as the price listed by the store. You pay for your shopping plus the delivery fee.</p>
+              </div>
+            </div>
+
+            <!-- FAQ 6 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-6" id="faq-b-6">
+                  <span>How do I pay?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-6" role="region" aria-labelledby="faq-b-6" hidden>
+                <p>Orders are paid securely online when you check out.</p>
+                <p>Your payment may appear on your bank statement as <strong>CloudSkunk Hosting</strong>.</p>
+              </div>
+            </div>
+            
+            <!-- FAQ 7 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-7" id="faq-b-7">
+                  <span>Can my local store join Ghost Shopper?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-7" role="region" aria-labelledby="faq-b-7" hidden>
+                <p>Yes. We're always looking to work with local stores, supermarkets, butcheries, bakeries and other businesses.</p>
+                <p>If you'd like your store to be available to Ghost Shopper customers, get in touch with us using the contact options on the left.</p>
+              </div>
+            </div>
+
+            <!-- FAQ 8 -->
+            <div class="faq-item">
+              <h3 class="faq-q-wrap">
+                <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-a-8" id="faq-b-8">
+                  <span>Can I become a Ghost Shopper rider?</span>
+                  <i class="fas fa-chevron-down faq-chevron" aria-hidden="true"></i>
+                </button>
+              </h3>
+              <div class="faq-a" id="faq-a-8" role="region" aria-labelledby="faq-b-8" hidden>
+                <p>Yes. We work with local riders to collect orders from stores and deliver them to customers.</p>
+                <p><a class="faq-link" href="https://ghostdriver.web.app">Become a Rider</a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== CLOSING SECTION ==================== -->
+    <section class="closing-section" aria-labelledby="closing-heading">
+      <div class="closing-inner">
+        <h2 id="closing-heading">Local shopping. Delivered.</h2>
+        <p>Ghost Shopper connects you with stores in your community and brings your order to your door.</p>
+        <p>We're starting in <strong>Verulam, KZN</strong>, with more stores and areas to come.</p>
+        <p class="closing-fee"><strong>Delivery from R35.</strong></p>
+        <a href="stores.html" class="btn-primary">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          <span>Shop Now</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo logo-footer">
+            <img src="img/ghost-shopper-logo.png" alt="Ghost Shopper" class="logo-img" width="76" height="76" decoding="async" loading="lazy" />
+            <span class="logo-name">Ghost<span>Shopper</span></span>
+          </div>
+          <p>Local stores. Local riders. Delivered to your door.</p>
+        </div>
+        <div>
+          <div class="footer-col-title">Company</div>
+          <div class="footer-links">
+            <a href="about.html">About Us</a>
+            <a href="#how">How It Works</a>
+            <a href="#" id="partnerWithUsLink">Partner with Us</a>
+            <a href="https://ghostdriver.web.app">Become a Rider</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">Support</div>
+          <div class="footer-links">
+            <a href="https://wa.me/27628989813" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-whatsapp" aria-hidden="true"></i> Chat on WhatsApp
+            </a>
+            <a href="my-orders.html">Track My Order</a>
+            <a href="https://wa.me/27628989813?text=I%20would%20like%20to%20report%20an%20issue..." target="_blank" rel="noopener noreferrer">Report an Issue</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">Legal</div>
+          <div class="footer-links">
+            <a href="#" class="legal-link" data-modal="privacy">Privacy Policy</a>
+            <a href="#" class="legal-link" data-modal="terms">Terms of Service</a>
+            <a href="#" class="legal-link" data-modal="cookie-info">Cookie Policy</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-payments" aria-label="Accepted payment methods">
+        <span class="footer-payments-label">We accept</span>
+        <img
+          src="img/payment.png"
+          alt="Accepted payment methods: Visa, Mastercard, Google Pay"
+          class="footer-payments-img"
+          width="173"
+          height="30"
+          loading="lazy"
+          decoding="async"
+          onerror="this.style.display='none'"
+        />
+        <span class="footer-payments-note">
+          <i class="fas fa-lock" aria-hidden="true"></i>
+          Payments processed securely through Yoco
+        </span>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ghost Shopper | Cloudskunk Hosting, All rights reserved. Terms and Conditions Apply.</p>
+                <div class="footer-socials" aria-label="Social media links">
+          <a href="https://web.facebook.com/profile.php?id=61589902767644" class="social-btn" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-facebook-f" aria-hidden="true"></i>
+          </a>
+          <a href="https://wa.me/27628989813" class="social-btn" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i>
+          </a>
+          <a href="https://www.tiktok.com/@ghostshopza" class="social-btn" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-tiktok" aria-hidden="true"></i>
+          </a>
+          <a href="https://x.com/Ghostshopza" class="social-btn" aria-label="X (Twitter)" target="_blank" rel="noopener noreferrer">
+            <!-- Inline SVG for X logo -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== BOTTOM NAV ==================== -->
+  <div class="bottom-nav" role="navigation" aria-label="Mobile navigation">
+    <button class="nav-item active" data-page="home" type="button">
+      <i class="fas fa-home" aria-hidden="true"></i><span>Home</span>
+    </button>
+    <button class="nav-item" data-page="stores" id="bottomStoresBtn" type="button">
+      <i class="fas fa-store" aria-hidden="true"></i><span>Stores</span>
+    </button>
+    <button class="nav-item" data-page="cart" id="mobileCartBtn" type="button">
+      <i class="fas fa-shopping-bag" aria-hidden="true"></i><span>Cart</span>
+      <span class="bottom-cart-badge" id="bottom-cart-count">0</span>
+    </button>
+    <button class="nav-item" data-page="notifications" id="bottomNotifyBtn" type="button">
+      <i class="fas fa-bell" aria-hidden="true"></i>
+      <span>Alerts</span>
+      <span class="bottom-notif-badge" id="bottom-notif-count" style="display:none;">•</span>
+    </button>
+    <button class="nav-item" data-page="account" id="bottomAccountBtn" type="button">
+      <i class="fas fa-user" aria-hidden="true"></i><span>Account</span>
+    </button>
+  </div>
+
+  <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">
+    <i class="fas fa-ghost" aria-hidden="true"></i>
+  </button>
+
+  <div id="legalModalContainer" class="legal-modal" style="display:none;"></div>
+
+  <!-- ==================== AUTH MODAL ==================== -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" role="button" tabindex="0" aria-label="Close sign in">&times;</span>
+
+      <div class="auth-icon" aria-hidden="true">
+        <i class="fas fa-phone-alt"></i>
+      </div>
+      <h3>Sign in or Create Account</h3>
+      <p class="auth-sub">Enter your mobile number. We'll send you a one-time code.</p>
+
+      <form id="phoneForm">
+        <div class="form-group">
+          <label for="phoneNumber">Mobile Number <span style="color:var(--red,#dc2626);">*</span></label>
+          <div class="phone-input-group">
+            <span class="phone-input-prefix">+27</span>
+            <input
+              type="tel"
+              id="phoneNumber"
+              placeholder="82 123 4567"
+              inputmode="numeric"
+              maxlength="9"
+              pattern="[0-9]{9}"
+              autocomplete="tel-national"
+              required
+            />
+          </div>
+          <div class="auth-hint">Enter 9 digits — no leading 0, no country code.</div>
+        </div>
+        <button type="submit" id="sendOtpBtn">Send OTP</button>
+      </form>
+
+      <div id="otpSection" style="display:none;">
+        <div class="form-group">
+          <label for="otpCode">Enter 6-digit code</label>
+          <input type="text" id="otpCode" class="otp-code-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+          <small style="font-size:0.7rem;color:var(--text-muted,#9ca3af);">We sent a code to <span id="otpPhoneDisplay" style="font-weight:600;color:var(--navy,#1B2B6B);"></span></small>
+        </div>
+        <button id="verifyBtn" type="button">Verify & Sign In</button>
+        <button type="button" id="resendOtpBtn" style="background:transparent;border:none;color:var(--orange,#F97316);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;margin-top:0.5rem;display:block;width:100%;text-align:center;">Resend OTP</button>
+      </div>
+
+      <div id="authMessage"></div>
+      <div class="auth-extra">
+        <p>By continuing, you agree to our <a href="#" class="legal-link" data-modal="terms" style="color:var(--orange,#F97316);font-weight:600;text-decoration:none;">Terms of Service</a> and <a href="#" class="legal-link" data-modal="privacy" style="color:var(--orange,#F97316);font-weight:600;text-decoration:none;">Privacy Policy</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== INSTALL SHEET ==================== -->
+  <div class="install-sheet" id="installSheet" role="dialog" aria-modal="true" aria-labelledby="installSheetTitle" hidden>
+    <div class="install-sheet-backdrop" id="installSheetBackdrop"></div>
+    <div class="install-sheet-panel" role="document">
+      <button class="install-sheet-close" id="installSheetClose" type="button" aria-label="Close install prompt">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+      <div class="install-sheet-body">
+        <div class="install-sheet-icon">
+          <img src="img/ghost-shopper-logo.png" alt="" width="60" height="60" decoding="async" loading="lazy" />
+        </div>
+        <div class="install-sheet-text">
+          <h3 id="installSheetTitle">Install Ghost Shopper</h3>
+          <p id="installSheetDesc">Add Ghost Shopper to your home screen for quicker access and a full-screen app experience.</p>
+        </div>
+      </div>
+      <div class="install-sheet-actions">
+        <button class="install-sheet-primary" id="installSheetInstall" type="button">
+          <i class="fas fa-download" aria-hidden="true"></i>
+          <span>Install</span>
+        </button>
+        <button class="install-sheet-secondary" id="installSheetLater" type="button">Not now</button>
+      </div>
+      <div class="install-sheet-ios-hint" id="installSheetIosHint" hidden>
+        <p><strong>To install on iPhone or iPad:</strong></p>
+        <ol>
+          <li>Tap the <i class="fas fa-arrow-up-from-bracket" aria-hidden="true"></i> Share button in Safari</li>
+          <li>Scroll and tap <strong>Add to Home Screen</strong></li>
+          <li>Tap <strong>Add</strong></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ANNOUNCEMENT SHEET ==================== -->
+  <div class="announcement-sheet" id="announcementSheet" role="dialog" aria-modal="true" aria-labelledby="announcementTitle" hidden>
+    <div class="announcement-backdrop" id="announcementBackdrop"></div>
+    <div class="announcement-panel" role="document">
+      <button class="announcement-close" id="announcementClose" type="button" aria-label="Close announcement">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+      <div class="announcement-media" id="announcementMedia" hidden>
+        <img id="announcementImage" alt="" width="600" height="300" loading="lazy" decoding="async" />
+      </div>
+      <div class="announcement-body">
+        <div class="announcement-store-logo" id="announcementStoreLogoWrap" hidden>
+          <img id="announcementStoreLogo" alt="" width="56" height="56" loading="lazy" decoding="async" />
+        </div>
+        <h3 id="announcementTitle">New store on Ghost Shopper</h3>
+        <p id="announcementMessage"></p>
+        <div class="announcement-actions">
+          <a id="announcementStoreLink" class="announcement-primary" href="#" hidden>
+            <i class="fas fa-store" aria-hidden="true"></i> View Store
+          </a>
+          <a id="announcementFacebookLink" class="announcement-secondary" href="#" target="_blank" rel="noopener noreferrer" hidden>
+            <i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PARTNER WITH US MODAL ==================== -->
+  <div class="partner-modal" id="partnerModal" role="dialog" aria-modal="true" aria-labelledby="partnerModalTitle" hidden>
+    <div class="partner-modal-backdrop" id="partnerModalBackdrop"></div>
+    <div class="partner-modal-panel" role="document">
+      <button class="partner-modal-close" id="partnerModalClose" type="button" aria-label="Close">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+
+      <div class="partner-modal-icon" aria-hidden="true">
+        <i class="fas fa-handshake"></i>
+      </div>
+
+      <h3 id="partnerModalTitle">Partner with Us</h3>
+      <p class="partner-modal-sub">
+        Get in touch to list your store on Ghost Shopper. Choose how you'd like to reach us.
+      </p>
+
+      <div class="partner-modal-actions">
+        <a
+          class="partner-btn partner-btn-email"
+          id="partnerEmailBtn"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="partner-btn-icon"><i class="fas fa-envelope" aria-hidden="true"></i></span>
+          <span class="partner-btn-text">
+            <strong>Send an Email</strong>
+            <small>wedeliverzn@gmail.com</small>
+          </span>
+        </a>
+
+        <a
+          class="partner-btn partner-btn-whatsapp"
+          id="partnerWhatsappBtn"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="partner-btn-icon"><i class="fab fa-whatsapp" aria-hidden="true"></i></span>
+          <span class="partner-btn-text">
+            <strong>Chat on WhatsApp</strong>
+            <small>+27 62 898 9813</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+    <!-- ==================== TOAST ==================== -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ==================== STORE REQUEST MODAL ==================== -->
+  <div class="gs-modal" id="storeRequestModal" role="dialog" aria-modal="true" aria-labelledby="storeRequestModalTitle" hidden>
+    <div class="gs-modal-backdrop" data-store-request-close></div>
+    <div class="gs-modal-panel" role="document">
+      <div class="gs-modal-header">
+        <h3 class="gs-modal-title" id="storeRequestModalTitle">
+          <i class="fas fa-store-slash" aria-hidden="true"></i>
+          Request a store
+        </h3>
+        <button class="gs-modal-close" type="button" aria-label="Close" data-store-request-close>
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="gs-modal-body">
+        <p class="gs-modal-sub">
+          Tell us which store you'd like to see on Ghost Shopper. We'll pass it on to the team.
+        </p>
+
+        <div class="gs-form-group">
+          <label for="storeRequestStoreName">Store name *</label>
+          <input type="text" id="storeRequestStoreName" placeholder="e.g. Golden Gate Super Cash & Carry" maxlength="120" />
+        </div>
+
+        <div class="gs-form-group">
+          <label for="storeRequestLocation">Area or location *</label>
+          <input type="text" id="storeRequestLocation" placeholder="e.g. Verulam" maxlength="120" />
+        </div>
+
+        <div class="gs-form-group">
+          <label for="storeRequestName">Your name *</label>
+          <input type="text" id="storeRequestName" placeholder="e.g. John" maxlength="80" autocomplete="name" />
+        </div>
+
+        <div class="gs-form-group">
+          <label for="storeRequestContact">Your mobile number * <span style="font-weight:400;color:var(--text-muted);">(so we can notify you)</span></label>
+          <input type="tel" id="storeRequestContact" placeholder="e.g. 082 429 4356" maxlength="20" inputmode="tel" autocomplete="tel" />
+          <small class="request-field-hint" style="display:block;margin-top:6px;font-size:0.72rem;font-weight:500;color:var(--text-muted);line-height:1.4;">We'll only use this to let you know when the store joins.</small>
+        </div>
+      </div>
+
+      <div class="gs-modal-footer gs-modal-footer-row">
+        <button type="button" class="gs-btn-secondary" data-store-request-close>Cancel</button>
+        <button type="button" class="gs-btn-primary" id="storeRequestSubmit">
+          <i class="fas fa-paper-plane" aria-hidden="true"></i>
+          <span>Send request</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CART MODAL ==================== -->
+  <div class="cart-modal" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle" hidden>
+    <div class="cart-modal-backdrop"></div>
+    <div class="cart-modal-panel" role="document">
+      <div class="cart-modal-header">
+        <h2 class="cart-modal-title" id="cartModalTitle">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          Your Cart
+          <span class="cart-modal-count">0</span>
+        </h2>
+        <button class="cart-modal-close" type="button" aria-label="Close cart">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="cart-modal-store-badge" hidden>
+        <i class="fas fa-store" aria-hidden="true"></i>
+        <span class="cart-modal-store-name"></span>
+      </div>
+
+      <div class="cart-modal-body"></div>
+      <div class="cart-modal-footer"></div>
+    </div>
+  </div>
+
+
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="config/env.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/global.js"></script>
+  <script type="module" src="js/index.js"></script>
+</body>
+</html>

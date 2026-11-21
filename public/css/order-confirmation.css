@@ -1,0 +1,692 @@
+/* ============================================================
+   ORDER-CONFIRMATION.CSS — Ghost Shopper order confirmation
+   Requires base.css + index.css loaded first.
+   ============================================================ */
+
+/* ============================================================
+   1. HERO
+   ============================================================ */
+.confirmation-hero {
+  position: relative;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
+  color: #fff;
+  padding: 32px 20px 40px;
+  overflow: hidden;
+  text-align: center;
+}
+.confirmation-hero::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -15%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(249,115,22,0.30), transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.confirmation-hero-inner {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.confirmation-hero-icon {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: rgba(22,163,74,0.18);
+  color: #4ade80;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  box-shadow: 0 0 0 6px rgba(22,163,74,0.10);
+}
+.confirmation-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.16);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(6px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.confirmation-hero-eyebrow i { color: var(--orange); font-size: 0.72rem; }
+.confirmation-hero h1 {
+  font-size: clamp(1.5rem, 4.4vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+.confirmation-hero p {
+  font-size: clamp(0.86rem, 2vw, 0.98rem);
+  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 480px;
+}
+@media (min-width: 769px) {
+  .confirmation-hero { padding: 44px 32px 52px; }
+}
+@media (max-width: 480px) {
+  .confirmation-hero { padding: 26px 16px 34px; }
+}
+
+/* ============================================================
+   2. PAGE
+   ============================================================ */
+.confirmation-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (min-width: 769px) {
+  .confirmation-page { padding: 28px 32px 40px; }
+}
+
+/* Store badge */
+.confirmation-store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--orange-soft);
+  color: var(--navy);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(249,115,22,0.25);
+  align-self: flex-start;
+}
+.confirmation-store-badge i { color: var(--orange); }
+.confirmation-store-badge[hidden] { display: none; }
+
+/* ============================================================
+   3. RECEIPT
+   ============================================================ */
+.receipt-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--navy);
+  color: #fff;
+}
+.receipt-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.receipt-title i { color: var(--orange); }
+.receipt-order-id {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+}
+
+.confirmation-container {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (max-width: 480px) {
+  .confirmation-container { padding: 14px; }
+}
+
+.confirmation-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 20px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.confirmation-loading i { font-size: 1.6rem; color: var(--orange); }
+
+/* Error state */
+.confirmation-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.confirmation-error i {
+  font-size: 2.2rem;
+  color: var(--red);
+}
+.confirmation-error h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0;
+}
+.confirmation-error p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 320px;
+  line-height: 1.5;
+}
+.confirmation-error .btn-primary,
+.confirmation-error .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 44px;
+  margin-top: 4px;
+}
+.confirmation-error .btn-primary {
+  background: var(--orange);
+  color: #fff;
+}
+.confirmation-error .btn-secondary {
+  background: var(--bg);
+  color: var(--navy);
+  border: 1px solid var(--border);
+}
+
+/* ============================================================
+   4. ORDER DETAILS CARD
+   ============================================================ */
+.order-details-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+}
+.order-details-card .order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed var(--border);
+}
+.order-details-card .order-row:last-child { border-bottom: none; }
+.order-details-card .order-row .label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.order-details-card .order-row .value {
+  font-weight: 500;
+  color: var(--text);
+  text-align: right;
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+}
+.order-details-card .order-row .value i {
+  color: var(--orange);
+  margin-right: 4px;
+  font-size: 0.85rem;
+}
+.order-details-card .order-row .value a {
+  color: var(--orange);
+  text-decoration: none;
+  font-weight: 600;
+}
+.order-details-card .order-row .value a:hover { text-decoration: underline; }
+.order-details-card .order-row.refund-row {
+  background: #fef2f2;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  border-left: 3px solid var(--red);
+  border-bottom: none;
+}
+
+/* Status badge */
+.order-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.order-status-badge.status-pending { background: #fef3c7; color: #92400e; }
+.order-status-badge.status-confirmed { background: #dbeafe; color: #1e40af; }
+.order-status-badge.status-packing { background: #e0e7ff; color: #3730a3; }
+.order-status-badge.status-collected { background: #dbeafe; color: #1e40af; }
+.order-status-badge.status-on_the_way { background: #dcfce7; color: #166534; }
+.order-status-badge.status-delivered { background: #dcfce7; color: #166534; }
+.order-status-badge.status-refunded { background: #fee2e2; color: #991b1b; }
+
+/* ============================================================
+   5. DRIVER ROW
+   ============================================================ */
+.driver-row .value {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.driver-info-text {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+}
+.driver-info-text i { font-size: 0.95rem; }
+.driver-photo-container {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.driver-profile-photo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--orange);
+  object-fit: cover;
+  display: block;
+}
+
+/* ============================================================
+   6. ITEMS LIST
+   ============================================================ */
+.order-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.order-items li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+.order-items li img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: #f3f4f6;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.order-items li .item-detail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.order-items li .item-detail .item-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.order-items li .item-detail .item-qty {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.order-items li .item-detail .item-total {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--orange);
+}
+
+/* Item status badges */
+.item-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.item-status-badge.in-stock { background: #dcfce7; color: #166534; }
+.item-status-badge.alternate { background: #eff6ff; color: var(--blue-d); }
+.item-status-badge.out-of-stock { background: #fee2e2; color: #991b1b; }
+.item-status-badge i { font-size: 0.65rem; }
+
+.item-original {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: var(--surface);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.item-original .original-label { color: var(--text-muted); }
+.item-original .original-name { font-weight: 600; color: var(--text); }
+.item-original .original-price { color: var(--orange); font-weight: 600; }
+
+.item-refund {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--red);
+  background: #fef2f2;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid #fee2e2;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+/* ============================================================
+   7. TOTALS
+   ============================================================ */
+.order-totals {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.order-totals .total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 0.88rem;
+}
+.order-totals .total-row span:first-child { color: var(--text-secondary); }
+.order-totals .total-row span:last-child { font-weight: 600; color: var(--text); }
+.order-totals .total-row.grand-total {
+  border-top: 2px solid var(--border);
+  padding-top: 10px;
+  margin-top: 4px;
+  font-size: 1rem;
+}
+.order-totals .total-row.grand-total span:first-child {
+  color: var(--navy);
+  font-weight: 800;
+}
+.order-totals .total-row.grand-total .amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+/* ============================================================
+   8. TRACKING STEPS
+   ============================================================ */
+.tracking-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.tracking-section h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.01em;
+}
+.tracking-section h3 i { color: var(--orange); }
+
+.tracking-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+.tracking-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+}
+.tracking-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: -12px;
+  width: 2px;
+  background: var(--border);
+}
+.tracking-step.done:not(:last-child)::before {
+  background: var(--green);
+}
+
+.tracking-step .step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
+}
+.tracking-step .step-icon.completed {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.tracking-step .step-icon.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+  box-shadow: 0 0 0 5px rgba(249,115,22,0.15);
+}
+.tracking-step .step-icon.pending {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.tracking-step .step-info {
+  flex: 1;
+  min-width: 0;
+}
+.tracking-step .step-info .step-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+.tracking-step .step-info .step-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+.tracking-step.is-active .step-info .step-label { color: var(--orange); }
+
+/* ============================================================
+   9. SEND RECEIPT ACTIONS
+   ============================================================ */
+.send-receipt-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.send-receipt-actions[hidden] { display: none; }
+.send-btn {
+  flex: 1;
+  min-width: 160px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  min-height: 46px;
+}
+.send-btn.whatsapp {
+  background: #25d366;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37,211,102,0.25);
+}
+.send-btn.whatsapp:hover {
+  background: #128c7e;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37,211,102,0.35);
+}
+.send-btn.email {
+  background: var(--navy);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(27,43,107,0.25);
+}
+.send-btn.email:hover {
+  background: var(--blue-d);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(27,43,107,0.35);
+}
+.send-btn:active { transform: translateY(0) scale(0.98); }
+
+/* ============================================================
+   10. CONFIRMATION ACTIONS
+   ============================================================ */
+.confirmation-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.confirmation-btn {
+  flex: 1;
+  min-width: 160px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 22px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  min-height: 48px;
+}
+.confirmation-btn.primary {
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(249,115,22,0.28);
+}
+.confirmation-btn.primary:hover {
+  background: var(--orange-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(249,115,22,0.4);
+}
+.confirmation-btn.secondary {
+  background: var(--surface);
+  color: var(--navy);
+  border: 1px solid var(--border);
+}
+.confirmation-btn.secondary:hover {
+  background: var(--bg);
+  border-color: var(--navy);
+}
+.confirmation-btn:active { transform: translateY(0) scale(0.98); }
+
+/* ============================================================
+   11. RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .receipt-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .order-details-card .order-row { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .order-details-card .order-row .value { text-align: left; }
+  .driver-row .value { justify-content: flex-start; }
+  .send-btn { width: 100%; }
+  .confirmation-btn { width: 100%; }
+}
+/* ============================================================
+   Additional status badge colors
+   ============================================================ */
+.order-status-badge.status-packed,
+.order-status-badge.status-ready {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+.order-status-badge.status-assigned {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.order-status-badge.status-collected {
+  background: #E0E7FF;
+  color: #3730A3;
+}

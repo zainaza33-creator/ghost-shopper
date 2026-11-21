@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <title>Driver Registration — Ghost Driver</title>
+  
+  <link rel="manifest" href="manifest-driver.json" />
+  <link rel="icon" type="image/png" href="img/driver-favicon.png" />
+  <link rel="apple-touch-icon" href="img/icon-192.png" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="css/driver-auth.css" />
+</head>
+<body class="driver-auth-body">
+
+  <header class="driver-auth-header">
+    <a href="driver-login.html" class="brand">
+      <img src="img/ghost-driver.png" alt="Ghost Driver" />
+      <span class="brand-text">Ghost</span>
+      <span class="brand-driver-badge">Driver</span>
+    </a>
+    <a href="driver-login.html" class="back-link">
+      Already registered? <i class="fas fa-sign-in-alt"></i>
+    </a>
+  </header>
+
+  <main class="driver-auth-main">
+    <div class="driver-auth-card">
+      
+      <!-- REGISTRATION FORM VIEW -->
+      <div id="registerFormView">
+        <div class="driver-hero-section">
+          <div class="driver-hero-icon">
+            <i class="fas fa-motorcycle"></i>
+          </div>
+          <h2>Become a Driver</h2>
+          <p>Join Ghost Driver and earn on your own schedule.</p>
+        </div>
+
+        <div class="driver-form-wrap">
+          <form id="registerForm">
+            <div class="driver-form-row">
+              <div class="driver-form-group">
+                <label for="firstName">First Name</label>
+                <div class="driver-input-wrap">
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" id="firstName" placeholder="John" required autocomplete="given-name" />
+                </div>
+              </div>
+              <div class="driver-form-group">
+                <label for="lastName">Surname</label>
+                <div class="driver-input-wrap">
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" id="lastName" placeholder="Doe" required autocomplete="family-name" />
+                </div>
+              </div>
+            </div>
+
+            <div class="driver-form-group">
+              <label for="email">Email Address</label>
+              <div class="driver-input-wrap">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" placeholder="driver@example.com" required autocomplete="email" />
+              </div>
+            </div>
+
+            <div class="driver-form-group">
+              <label for="phone">Mobile Number</label>
+              <div class="driver-phone-wrap">
+                <span class="driver-phone-prefix">+27</span>
+                <input type="tel" id="phone" placeholder="82 123 4567" maxlength="9" required autocomplete="tel-national" />
+              </div>
+            </div>
+
+            <div class="driver-form-group">
+              <label for="password">Password</label>
+              <div class="driver-input-wrap">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="password" placeholder="Create a password" required minlength="6" autocomplete="new-password" />
+                <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Toggle password visibility">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="driver-checkbox-group">
+              <input type="checkbox" id="agreeTerms" required />
+              <label for="agreeTerms">
+                I agree to the <a href="#" onclick="openLegal('terms'); return false;">Terms & Conditions</a> and <a href="#" onclick="openLegal('privacy'); return false;">Privacy Policy</a>.
+              </label>
+            </div>
+
+            <div id="authStatus" class="driver-status" style="font-size: 0.85rem; margin-top: 0.5rem; text-align: center;"></div>
+
+            <button type="submit" class="driver-btn-primary" id="registerBtn" style="margin-top: 1rem;">
+              <i class="fas fa-user-plus" style="margin-right: 8px;"></i> Register
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- VERIFICATION SCREEN VIEW -->
+      <div id="verifyEmailView" style="display: none;">
+        <div class="driver-hero-section">
+          <div class="driver-hero-icon">
+            <i class="fas fa-envelope-open-text"></i>
+          </div>
+          <h2 id="verifyGreeting">Hi there!</h2>
+          <p>We've sent you a verification link. Please check your email.</p>
+        </div>
+        <div class="driver-form-wrap" style="text-align: center;">
+          <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
+            We sent the link to <strong id="verifyEmailDisplay"></strong>. 
+            If you don't see it in your inbox, please check your spam folder.
+          </p>
+          <div id="verifyStatus" class="driver-status" style="font-size: 0.85rem; margin-bottom: 1rem;"></div>
+          
+          <button type="button" id="resendEmailBtn" class="driver-btn-primary" style="margin-bottom: 0.5rem;">
+            <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Resend Verification Link
+          </button>
+          
+          <button type="button" id="goToLoginBtn" class="driver-btn-primary" style="background: transparent; color: var(--navy); border: 1px solid var(--border);">
+            Back to Login
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="driver-auth-footer">
+    <div class="driver-footer-links">
+      <a href="#" onclick="openLegal('terms'); return false;">Terms & Conditions</a>
+      <a href="#" onclick="openLegal('privacy'); return false;">Privacy Policy</a>
+    </div>
+    <div class="driver-footer-copyright">
+      &copy; 2026 Ghost Shopper. All rights reserved.
+    </div>
+  </footer>
+
+  <div class="driver-legal-modal" id="legalModal">
+    <div class="driver-legal-content">
+      <div class="driver-legal-header">
+        <h3 id="legalTitle">Terms & Conditions</h3>
+        <button class="driver-legal-close" onclick="closeLegal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="driver-legal-body" id="legalBody"></div>
+    </div>
+  </div>
+
+  <script src="config/env.js"></script>
+  <script type="module" src="js/driver-register.js"></script>
+
+  <script>
+    function openLegal(type) { /* ... same as before ... */ 
+      const modal = document.getElementById('legalModal');
+      const title = document.getElementById('legalTitle');
+      const body = document.getElementById('legalBody');
+      if (type === 'terms') {
+        title.textContent = 'Driver Terms & Conditions';
+        body.innerHTML = '<p>Loading terms...</p>';
+        fetch('modals/driver-terms.html').then(r => r.text()).then(html => { body.innerHTML = html; modal.classList.add('active'); }).catch(() => { body.innerHTML = '<p>Could not load terms.</p>'; modal.classList.add('active'); });
+      } else {
+        title.textContent = 'Driver Privacy Policy';
+        body.innerHTML = '<p>Loading privacy policy...</p>';
+        fetch('modals/driver-privacy.html').then(r => r.text()).then(html => { body.innerHTML = html; modal.classList.add('active'); }).catch(() => { body.innerHTML = '<p>Could not load privacy policy.</p>'; modal.classList.add('active'); });
+      }
+    }
+    function closeLegal() { document.getElementById('legalModal').classList.remove('active'); }
+
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err)); }
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!localStorage.getItem('driverInstallDismissed')) { showInstallBanner(); }
+    });
+
+    function showInstallBanner() {
+      if (document.getElementById('driverInstallBanner')) return;
+      const banner = document.createElement('div');
+      banner.id = 'driverInstallBanner';
+      banner.innerHTML = `
+        <div style="position:fixed; bottom:20px; left:20px; right:20px; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.15); padding:16px; z-index:9999; display:flex; align-items:center; gap:14px; border:1px solid #e5e7eb; max-width:400px; margin:0 auto;">
+          <img src="img/ghost-driver.png" style="width:48px; height:48px; border-radius:12px;" onerror="this.style.display='none'" />
+          <div style="flex:1;">
+            <h4 style="margin:0 0 4px; font-size:0.95rem; color:#1B2B6B;">Install Ghost Driver</h4>
+            <p style="margin:0; font-size:0.75rem; color:#6b7280; line-height:1.4;">Add to home screen for a full-screen experience.</p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button id="installDriverBtn" style="background:#F97316; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.8rem; cursor:pointer;">Install</button>
+            <button id="dismissDriverBtn" style="background:transparent; color:#9ca3af; border:none; font-size:0.7rem; cursor:pointer;">Not now</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(banner);
+      document.getElementById('installDriverBtn').addEventListener('click', async () => {
+        if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; deferredPrompt = null; banner.remove(); }
+      });
+      document.getElementById('dismissDriverBtn').addEventListener('click', () => { localStorage.setItem('driverInstallDismissed', 'true'); banner.remove(); });
+    }
+    window.addEventListener('appinstalled', () => { const banner = document.getElementById('driverInstallBanner'); if (banner) banner.remove(); });
+  </script>
+</body>
+</html>

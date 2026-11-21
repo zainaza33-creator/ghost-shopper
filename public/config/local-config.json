@@ -1,0 +1,11 @@
+{
+  "firebase": {
+    "apiKey": "AIzaSyBnYQqVzQTdbhjd2bXKKqvKkSIc4XGpwSw",
+    "authDomain": "ghostshopza.firebaseapp.com",
+    "projectId": "ghostshopza",
+    "storageBucket": "ghostshopza.firebasestorage.app",
+    "messagingSenderId": "473222699760",
+    "appId": "1:473222699760:web:3c0f791cd90cd823868035"
+  },
+  "googleMapsApiKey": "AIzaSyCgDysjnDzVdCjNnyCWBTO9DhUXnBUqAN0"
+}

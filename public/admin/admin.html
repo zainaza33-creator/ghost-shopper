@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Shopper — Admin Dashboard." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ghost Admin" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="../img/favicon.png" />
+  <link rel="apple-touch-icon" href="../img/icon-192.png" />
+
+  <title>Ghost Shopper — Admin Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+  <!-- ===== CSS MODULES ===== -->
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K9X7L6MD"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Install Banner -->
+  <div class="install-banner" id="install-banner">
+    <p><i class="fas fa-mobile-alt"></i> Add <span>Ghost Shopper</span> to your home screen</p>
+    <button class="banner-install-btn" id="banner-install-btn">Install app</button>
+    <button class="banner-dismiss" id="banner-dismiss">&times;</button>
+  </div>
+
+  <!-- Admin Layout -->
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <i class="fas fa-ghost"></i>
+        <span>Ghost<span>Shopper</span></span>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="dashboard">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </button>
+        <button class="nav-item" data-section="analytics">
+          <i class="fas fa-chart-line"></i> Analytics
+          <span class="badge" id="analyticsBadge">New</span>
+        </button>
+        <button class="nav-item" data-section="orders">
+          <i class="fas fa-shopping-bag"></i> Orders
+          <span class="badge" id="orderBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="storeNotifications">
+          <i class="fas fa-store"></i> Store Notifs
+          <span class="badge" id="storeNotifBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="refunds">
+          <i class="fas fa-undo-alt"></i> Refunds
+          <span class="badge" id="refundBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="drivers">
+          <i class="fas fa-motorcycle"></i> Drivers
+          <span class="badge" id="driverBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="driverPayments">
+          <i class="fas fa-hand-holding-usd"></i> Driver Payments
+          <span class="badge" id="driverPaymentBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="itemRequests">
+          <i class="fas fa-lightbulb"></i> Item Requests
+          <span class="badge" id="itemRequestBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="storeRequests">
+          <i class="fas fa-store-slash"></i> Store Requests
+          <span class="badge" id="storeRequestBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="storeApprovals">
+          <i class="fas fa-clipboard-check"></i> Store Approvals
+          <span class="badge" id="storeApprovalBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="stores">
+          <i class="fas fa-store"></i> Stores
+        </button>
+        <button class="nav-item" data-section="products">
+          <i class="fas fa-box"></i> Products
+        </button>
+        <button class="nav-item" data-section="specials">
+          <i class="fas fa-tag"></i> Specials
+        </button>
+        <button class="nav-item" data-section="areas">
+          <i class="fas fa-map-pin"></i> Areas
+        </button>
+        <button class="nav-item" data-section="notifications">
+          <i class="fas fa-bell"></i> Notifications
+          <span class="badge" id="notifBadge">0</span>
+        </button>
+        <button class="nav-item" data-section="settings">
+          <i class="fas fa-cog"></i> Settings
+        </button>
+        <button class="nav-item" data-section="testmode">
+          <i class="fas fa-vial"></i> Test Mode
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="adminLogoutBtn" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Header -->
+      <header class="admin-header">
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="admin-user">
+          <span id="adminName">Admin</span>
+          <i class="fas fa-user-circle"></i>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="admin-content" id="adminContent">
+        <!-- Dynamic content loaded by modules -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ============================================================ -->
+  <!--  SCRIPTS - Load as ES Modules                                -->
+  <!-- ============================================================ -->
+
+  <script src="config/env.js"></script>
+  <script type="module" src="js/admin-main.js"></script>
+</body>
+</html>

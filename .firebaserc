@@ -1,0 +1,21 @@
+{
+  "projects": {
+    "default": "ghostshopza"
+  },
+  "targets": {
+    "ghostshopza": {
+      "hosting": {
+        "driver": [
+          "ghostdriver"
+        ],
+        "default": [
+          "ghostshopza"
+        ],
+        "stores": [
+          "ghoststores"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

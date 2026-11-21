@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="theme-color" content="#1B2B6B" />
+  <meta name="description" content="Ghost Shopper — Shop from your favourite stores in Verulam, KZN." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ghost Shopper" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link rel="preload" href="/img/ghost-shopper-logo.png" as="image" />
+  <link rel="preload" href="/css/base.css" as="style" />
+  <link rel="preload" href="/css/index.css" as="style" />
+  <link rel="preload" href="/css/store.css" as="style" />
+
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/img/favicon.png" />
+  <link rel="apple-touch-icon" href="/img/icon-192.png" />
+  <title>Ghost Shopper — Store</title>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #F9FAFB;
+      color: #111827;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      padding-bottom: 80px;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      background: #1B2B6B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.45s ease;
+      padding: 24px;
+    }
+    #loadingScreen.hidden { opacity: 0; pointer-events: none; }
+    #loadingScreen .loader {
+      text-align: center;
+      color: #fff;
+      width: 100%;
+      max-width: 260px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    #loadingScreen .loader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #F97316;
+      border-radius: 50%;
+      animation: gsLoaderSpin 0.85s linear infinite;
+    }
+    @keyframes gsLoaderSpin { to { transform: rotate(360deg); } }
+    #loadingScreen .loader-tagline {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.92);
+      text-align: center;
+      line-height: 1.4;
+    }
+    #loadingScreen .loader-dots::after {
+      content: '';
+      display: inline-block;
+      width: 1.5ch;
+      text-align: left;
+      animation: gsLoaderDots 1.5s steps(1, end) infinite;
+      color: #F97316;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    @keyframes gsLoaderDots {
+      0%   { content: '.'; }
+      25%  { content: '..'; }
+      50%  { content: '...'; }
+      75%  { content: ''; }
+      100% { content: '.'; }
+    }
+    #loadingScreen .loader-logo {
+      height: 44px;
+      width: auto;
+      display: block;
+      opacity: 0.85;
+    }
+  </style>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'" />
+
+  <link rel="stylesheet" href="/css/base.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="/css/index.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="/css/store.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/index.css" />
+    <link rel="stylesheet" href="/css/store.css" />
+  </noscript>
+</head>
+<body>
+
+  <!-- ==================== LOADING SCREEN ==================== -->
+  <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading store">
+    <div class="loader">
+      <div class="loader-spinner" aria-hidden="true"></div>
+      <div class="loader-tagline">
+        Local deliveries made easy<span class="loader-dots" aria-hidden="true"></span>
+      </div>
+      <img src="/img/ghost-shopper-logo.png" alt="Ghost Shopper" class="loader-logo" width="80" height="80" decoding="async" />
+    </div>
+  </div>
+
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K9X7L6MD"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <!-- ==================== NAVBAR ==================== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar-inner">
+      <a href="/index.html" class="logo" aria-label="Ghost Shopper home">
+        <img src="/img/ghost-shopper-logo.png" alt="Ghost Shopper" class="logo-img" width="88" height="88" decoding="async" />
+        <span class="logo-name">Ghost<span>Shopper</span></span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="/stores.html" class="nav-icon-btn desktop-only" id="desktopStoresBtn" aria-label="Stores">
+          <i class="fas fa-store" aria-hidden="true"></i>
+        </a>
+        <button class="nav-icon-btn desktop-only" id="desktopNotifyBtn" type="button" aria-label="Notifications">
+          <i class="fas fa-bell" aria-hidden="true"></i>
+          <span class="notif-badge" id="desktop-notif-count" style="display:none;">•</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="desktopCartBtn" type="button" aria-label="Cart">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          <span class="cart-badge" id="cart-count">0</span>
+        </button>
+        <button class="nav-icon-btn desktop-only" id="authBtn" type="button" aria-label="Sign in">
+          <i class="fas fa-user" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== STORE HERO ==================== -->
+  <section class="store-hero" id="storeHero" aria-label="Store information">
+    <div class="store-hero-inner">
+
+      <div class="store-hero-top">
+        <div class="store-hero-logo-wrap">
+          <img src="" alt="Store logo" id="storeLogo" class="store-hero-logo" loading="lazy" onerror="this.src='img/placeholder.jpg'" />
+        </div>
+
+        <div class="store-hero-info">
+          <h1 class="store-hero-name" id="storeName">Loading...</h1>
+
+          <div class="store-hero-meta">
+            <span class="store-hero-rating">
+              <i class="fas fa-star" aria-hidden="true"></i>
+              <span id="storeRating">0.0</span>
+              <span class="store-hero-review-count">(<span id="storeReviews">0</span>)</span>
+            </span>
+          </div>
+
+          <p class="store-hero-desc" id="storeDescription"></p>
+        </div>
+      </div>
+
+      <div class="store-hero-facts">
+        <div class="store-hero-fact">
+          <i class="fas fa-clock" aria-hidden="true"></i>
+          <div class="store-hero-fact-text">
+            <span class="store-hero-fact-label">Hours</span>
+            <div class="store-hero-fact-value" id="storeHours">—</div>
+          </div>
+        </div>
+
+        <a class="store-hero-fact store-hero-fact-link" id="storeAddressFact" href="#" target="_blank" rel="noopener noreferrer" hidden>
+          <i class="fas fa-map-pin" aria-hidden="true"></i>
+          <div class="store-hero-fact-text">
+            <span class="store-hero-fact-label">Address</span>
+            <span class="store-hero-fact-value" id="storeAddress">—</span>
+          </div>
+        </a>
+
+        <a class="store-hero-fact store-hero-fact-link" id="storePhoneFact" href="#" hidden>
+          <i class="fas fa-phone" aria-hidden="true"></i>
+          <div class="store-hero-fact-text">
+            <span class="store-hero-fact-label">Phone</span>
+            <span class="store-hero-fact-value" id="storePhone">—</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="store-hero-fee" id="storeFeePill" hidden>
+        <i class="fas fa-tag" aria-hidden="true"></i>
+        Delivery from <span id="storeDeliveryFee">35</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== STORE PAGE ==================== -->
+  <main class="store-page">
+
+    <!-- ==================== FLYERS ==================== -->
+    <section class="flyer-section" id="flyerSection" hidden>
+      <div class="flyer-header">
+        <h3><i class="fas fa-image" aria-hidden="true"></i> Flyers &amp; Catalogs</h3>
+      </div>
+      <div class="flyer-scroll-wrapper">
+        <div class="flyer-scroll" id="flyerGrid"></div>
+      </div>
+    </section>
+
+    <!-- ==================== WEEKLY SPECIALS ==================== -->
+    <section class="store-specials-section" id="storeSpecialsSection" hidden>
+      <div class="section-head section-head-center">
+        <h2 class="section-title"><i class="fas fa-tag" style="color:var(--orange);" aria-hidden="true"></i> Weekly Specials</h2>
+      </div>
+      <div class="specials-scroll-wrapper">
+        <div class="specials-scroll" id="storeSpecialsGrid"></div>
+      </div>
+    </section>
+
+    <!-- ==================== BROWSE ITEMS ==================== -->
+    <section class="browse-items-section" id="browseItemsSection">
+      <div class="browse-items-head">
+        <h2 class="browse-items-title">
+          <i class="fas fa-th-large" aria-hidden="true"></i>
+          Browse Items
+        </h2>
+      </div>
+
+      <!-- ===== Request an item (button) ===== -->
+      <button type="button" class="request-item-btn" id="requestItemBtn">
+        <i class="fas fa-lightbulb" aria-hidden="true"></i>
+        <span>Can't find something? Ask us to add it</span>
+      </button>
+
+      <div class="browse-items-search-wrapper">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <label for="browseItemsSearch" class="sr-only">Search items in this store</label>
+        <input
+          type="text"
+          id="browseItemsSearch"
+          class="browse-items-search-input"
+          placeholder="Search items in this store..."
+          autocomplete="off"
+        />
+        <button type="button" class="browse-items-search-clear" id="browseItemsSearchClear" aria-label="Clear search" hidden>
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+            <!-- ===== Filters ===== -->
+      <div class="browse-filters" id="browseFilters">
+        <div class="browse-filter-group">
+          <label for="filterCategory" class="browse-filter-label">
+            <i class="fas fa-tags" aria-hidden="true"></i> Category
+          </label>
+          <select id="filterCategory" class="browse-filter-select">
+            <option value="all">All categories</option>
+          </select>
+        </div>
+        <div class="browse-filter-group">
+          <label for="sortBy" class="browse-filter-label">
+            <i class="fas fa-sort" aria-hidden="true"></i> Sort
+          </label>
+          <select id="sortBy" class="browse-filter-select">
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="name-asc">Name: A → Z</option>
+            <option value="name-desc">Name: Z → A</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="browse-items-count" id="browseItemsCount">Loading items...</div>
+
+      <div class="browse-items-grid" id="browseItemsGrid" role="list" aria-label="Items in this store"></div>
+
+      <div class="browse-items-empty" id="browseItemsEmpty" hidden>
+        <i class="fas fa-box-open" aria-hidden="true"></i>
+        <h3>No items found</h3>
+        <p id="browseItemsEmptyText">This store hasn't listed any items yet. Check back soon.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== BACK TO TOP (ghost) ==================== -->
+  <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">
+    <i class="fas fa-ghost" aria-hidden="true"></i>
+  </button>
+
+  <!-- ==================== CART MODAL ==================== -->
+  <div class="cart-modal" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle" hidden>
+    <div class="cart-modal-backdrop"></div>
+    <div class="cart-modal-panel" role="document">
+      <div class="cart-modal-header">
+        <h2 class="cart-modal-title" id="cartModalTitle">
+          <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+          Your Cart
+          <span class="cart-modal-count">0</span>
+        </h2>
+        <button class="cart-modal-close" type="button" aria-label="Close cart">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="cart-modal-store-badge" hidden>
+        <i class="fas fa-store" aria-hidden="true"></i>
+        <span class="cart-modal-store-name"></span>
+      </div>
+
+      <div class="cart-modal-body"></div>
+      <div class="cart-modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- ==================== BOTTOM NAV ==================== -->
+  <div class="bottom-nav" role="navigation" aria-label="Mobile navigation">
+    <button class="nav-item" data-page="home" type="button">
+      <i class="fas fa-home" aria-hidden="true"></i><span>Home</span>
+    </button>
+    <button class="nav-item" data-page="stores" id="bottomStoresBtn" type="button">
+      <i class="fas fa-store" aria-hidden="true"></i><span>Stores</span>
+    </button>
+    <button class="nav-item" data-page="cart" id="mobileCartBtn" type="button">
+      <i class="fas fa-shopping-bag" aria-hidden="true"></i><span>Cart</span>
+      <span class="bottom-cart-badge" id="bottom-cart-count">0</span>
+    </button>
+    <button class="nav-item" data-page="notifications" id="bottomNotifyBtn" type="button">
+      <i class="fas fa-bell" aria-hidden="true"></i>
+      <span>Alerts</span>
+      <span class="bottom-notif-badge" id="bottom-notif-count" style="display:none;">•</span>
+    </button>
+    <button class="nav-item" data-page="account" id="bottomAccountBtn" type="button">
+      <i class="fas fa-user" aria-hidden="true"></i><span>Account</span>
+    </button>
+  </div>
+
+  <!-- ==================== TOAST ==================== -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ==================== LEGAL MODAL CONTAINER ==================== -->
+  <div id="legalModalContainer" class="legal-modal" style="display:none;"></div>
+
+  <!-- ==================== AUTH MODAL ==================== -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" role="button" tabindex="0" aria-label="Close sign in">&times;</span>
+
+      <div class="auth-icon" aria-hidden="true">
+        <i class="fas fa-phone-alt"></i>
+      </div>
+      <h3>Sign in or Create Account</h3>
+      <p class="auth-sub">Enter your mobile number. We'll send you a one-time code.</p>
+
+      <form id="phoneForm">
+        <div class="form-group">
+          <label for="phoneNumber">Mobile Number <span style="color:var(--red,#dc2626);">*</span></label>
+          <div class="phone-input-group">
+            <span class="phone-input-prefix">+27</span>
+            <input
+              type="tel"
+              id="phoneNumber"
+              placeholder="82 123 4567"
+              inputmode="numeric"
+              maxlength="9"
+              pattern="[0-9]{9}"
+              autocomplete="tel-national"
+              required
+            />
+          </div>
+          <div class="auth-hint">Enter 9 digits — no leading 0, no country code.</div>
+        </div>
+        <button type="submit" id="sendOtpBtn">Send OTP</button>
+      </form>
+
+      <div id="otpSection" style="display:none;">
+        <div class="form-group">
+          <label for="otpCode">Enter 6-digit code</label>
+          <input type="text" id="otpCode" class="otp-code-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+          <small style="font-size:0.7rem;color:var(--text-muted,#9ca3af);">We sent a code to <span id="otpPhoneDisplay" style="font-weight:600;color:var(--navy,#1B2B6B);"></span></small>
+        </div>
+        <button id="verifyBtn" type="button">Verify & Sign In</button>
+        <button type="button" id="resendOtpBtn" style="background:transparent;border:none;color:var(--orange,#F97316);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;margin-top:0.5rem;display:block;width:100%;text-align:center;">Resend OTP</button>
+      </div>
+
+      <div id="authMessage"></div>
+      <div class="auth-extra">
+        <p>By continuing, you agree to our <a href="#" class="legal-link" data-modal="terms" style="color:var(--orange,#F97316);font-weight:600;text-decoration:none;">Terms of Service</a> and <a href="#" class="legal-link" data-modal="privacy" style="color:var(--orange,#F97316);font-weight:600;text-decoration:none;">Privacy Policy</a>.</p>
+      </div>
+    </div>
+  </div>
+
+    <!-- ==================== REQUEST ITEM MODAL ==================== -->
+  <div class="gs-modal" id="requestItemModal" role="dialog" aria-modal="true" hidden>
+    <div class="gs-modal-backdrop" data-request-close></div>
+    <div class="gs-modal-panel" role="document">
+      <div class="gs-modal-header">
+        <h3 class="gs-modal-title">
+          <i class="fas fa-lightbulb" aria-hidden="true"></i>
+          Ask us to add an item
+        </h3>
+        <button class="gs-modal-close" type="button" aria-label="Close" data-request-close>
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="gs-modal-body">
+        <p class="gs-modal-sub">
+          Can't find something at <strong id="requestStoreName">this store</strong>? Let us know and we'll try to stock it.
+        </p>
+
+        <div class="gs-form-group">
+          <label for="requestItemName">Item name *</label>
+          <input type="text" id="requestItemName" placeholder="e.g. Canned beans, Koo baked beans 410g" maxlength="120" />
+        </div>
+
+        <div class="gs-form-group">
+          <label for="requestItemNote">Notes (optional)</label>
+          <textarea id="requestItemNote" rows="2" placeholder="Brand, size, quantity you'd like..." maxlength="400"></textarea>
+        </div>
+
+        <div class="gs-form-group">
+          <label for="requestContact">Your mobile number * <span style="font-weight:400;color:var(--text-muted);">(so we can text you when it's in)</span></label>
+          <input type="tel" id="requestContact" placeholder="e.g. 082 429 4356" maxlength="20" inputmode="tel" autocomplete="tel" />
+          <small class="request-field-hint">We'll only use this to let you know about this item.</small>
+        </div>
+
+        <div class="gs-form-group">
+          <label class="request-checkbox-row" for="requestNotifyMe">
+            <input type="checkbox" id="requestNotifyMe" checked />
+            <span>Notify me when it's added</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="gs-modal-footer gs-modal-footer-row">
+        <button type="button" class="gs-btn-secondary" data-request-close>Cancel</button>
+        <button type="button" class="gs-btn-primary" id="requestSubmitBtn">
+          <i class="fas fa-paper-plane" aria-hidden="true"></i>
+          <span>Send request</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="/config/env.js"></script>
+  <script type="module" src="/js/firebase-config.js"></script>
+  <script type="module" src="/js/global.js"></script>
+  <script type="module" src="/js/store.js"></script>
+</body>
+</html>
